@@ -177,8 +177,8 @@ function Component() {
           <div className="flex-grow overflow-auto border border-gray-400" style={{ width: '724px', height: '330px' }}>
             <canvas
               ref={canvasRef}
-              width={2000}
-              height={2000}
+              width={724}
+              height={330}
               onMouseDown={startDrawing}
               onMouseMove={draw}
               onMouseUp={stopDrawing}
