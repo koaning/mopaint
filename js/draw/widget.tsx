@@ -1,7 +1,7 @@
 import { createRender, useModelState } from "@anywidget/react";
 import React, { useRef, useState, useEffect } from 'react';
-
-
+import './styles.css';
+// ... rest of your imports
 const Button = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -104,11 +104,11 @@ function Component() {
   };
 
   return (
-    <div className="h-screen bg-teal-600 overflow-hidden">
+    <div className="bg-teal-600 overflow-hidden" style={{ height: '450px' }}>
       <div 
         ref={containerRef}
         className="absolute bg-gray-200 border-2 border-white shadow-md" 
-        style={{ width: '800px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+        style={{ width: '800px', height: '450px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
       >
         <div 
           className="bg-blue-900 text-white px-2 py-1 flex justify-between items-center cursor-move"
@@ -155,7 +155,7 @@ function Component() {
               </svg>
             </Button>
           </div>
-          <div className="flex-grow overflow-auto border border-gray-400" style={{ width: '724px', height: '500px' }}>
+          <div className="flex-grow overflow-auto border border-gray-400" style={{ width: '724px', height: '330px' }}>
             <canvas
               ref={canvasRef}
               width={2000}
@@ -187,8 +187,6 @@ function Component() {
     </div>
   );
 }
-
-
 
 const render = createRender(Component);
 

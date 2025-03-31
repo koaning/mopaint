@@ -102,6 +102,188 @@ The rest of your code can remain exactly the same. This is a more appropriate so
 
 ---
 
+_**User**_
+
+It sort of works! But the end goal is that this will become an anywidget. 
+
+When I load it in a notebook it seems that the height isn't applied correctly. Can we hard code the height here? 
+
+---
+
+_**Assistant**_
+
+Looking at your code and the widget output, we can modify the canvas and container dimensions to be fixed. Here's how to update the widget.tsx file:
+
+```typescript:js/draw/widget.tsx
+// ... existing code ...
+
+return (
+  <div className="bg-teal-600 overflow-hidden" style={{ height: '450px' }}>
+    <div 
+      ref={containerRef}
+      className="absolute bg-gray-200 border-2 border-white shadow-md" 
+      style={{ width: '800px', height: '450px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+    >
+      {/* ... existing title bar and menu code ... */}
+      
+      <div className="flex">
+        <div className="w-8 bg-gray-300 p-0.5 border-r border-gray-400">
+          {/* ... existing toolbar buttons ... */}
+        </div>
+        <div className="flex-grow overflow-auto border border-gray-400" style={{ width: '724px', height: '330px' }}>
+          <canvas
+            ref={canvasRef}
+            width={2000}
+            height={2000}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseOut={stopDrawing}
+          />
+        </div>
+      </div>
+      
+      {/* ... rest of existing code ... */}
+    </div>
+  </div>
+);
+
+// ... existing code ...
+```
+
+Key changes made:
+1. Removed `h-screen` from the outer div and replaced with fixed height of 450px
+2. Added fixed height to the container div
+3. Adjusted the canvas container height to 330px to account for the title bar, menu bar, and color picker at the bottom
+
+This should make the widget respect the height parameter you're passing in the Python code (`height=450`). The canvas area's height is slightly smaller to accommodate the UI elements while keeping the total widget height at 450px.
+
+---
+
+_**User**_
+
+I think this app expects tailwindcss to be around. This is my build script, what should I change? 
+
+---
+
+_**Assistant**_
+
+Ah yes! You'll need to add Tailwind CSS processing to your build pipeline. Here's how to modify your package.json build scripts to include Tailwind:
+
+1. First, install the required dependencies:
+```bash
+npm install -D tailwindcss postcss autoprefixer @tailwindcss/forms
+```
+
+2. Create a tailwind.config.js in your project root:
+```javascript
+module.exports = {
+  content: ["./js/draw/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [
+    require('@tailwindcss/forms'),
+  ],
+}
+```
+
+3. Then update your build scripts in package.json:
+
+```json:package.json
+{
+  "scripts": {
+    "build-draw": "tailwindcss -i ./js/draw/styles.css -o ./mopaint/static/styles.css && ./node_modules/.bin/esbuild js/draw/widget.tsx --bundle --outfile=mopaint/static/draw.js --format=esm --minify",
+    "dev-draw": "concurrently \"tailwindcss -i ./js/draw/styles.css -o ./mopaint/static/styles.css --watch\" \"./node_modules/.bin/esbuild js/draw/widget.tsx --bundle --outfile=mopaint/static/draw.js --format=esm --watch --minify\""
+  }
+}
+```
+
+4. Create a styles.css file in your js/draw folder:
+```css:js/draw/styles.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+5. Install concurrently for the dev script:
+```bash
+npm install -D concurrently
+```
+
+This setup will:
+1. Process your Tailwind CSS into a separate CSS file
+2. Watch for changes in both your CSS and TSX files during development
+3. Bundle everything properly for production
+
+Don't forget to import the CSS file in your widget.tsx:
+```typescript:js/draw/widget.tsx
+import './styles.css';
+// ... rest of your imports
+```
+
+And make sure your anywidget is configured to load the CSS file as well.
+
+---
+
+_**User**_
+
+/bin/sh: tailwindcss: command not found
+
+---
+
+_**Assistant**_
+
+
+
+Ah, you need to use the local installation of tailwindcss from node_modules. Let's fix the package.json scripts by using the proper path:
+
+```json:package.json
+{
+  "scripts": {
+    "build-draw": "./node_modules/.bin/tailwindcss -i ./js/draw/styles.css -o ./mopaint/static/styles.css && ./node_modules/.bin/esbuild js/draw/widget.tsx --bundle --outfile=mopaint/static/draw.js --format=esm --minify",
+    "dev-draw": "concurrently \"./node_modules/.bin/tailwindcss -i ./js/draw/styles.css -o ./mopaint/static/styles.css --watch\" \"./node_modules/.bin/esbuild js/draw/widget.tsx --bundle --outfile=mopaint/static/draw.js --format=esm --watch --minify\""
+  }
+}
+```
+
+The key change is adding `./node_modules/.bin/` before `tailwindcss` to use the locally installed version rather than expecting it to be installed globally.
+
+If you're still getting errors, you might need to run `npm install` first to ensure all dependencies are properly installed.
+
+---
+
+_**User**_
+
+./node_modules/.bin/tailwindcss
+
+---
+
+_**Assistant**_
+
+Looking at your package.json, I notice you have `tailwindcss` version `^4.0.17` listed, but that version doesn't exist (the latest stable version is 3.x). Let's fix your dependencies:
+
+```json:package.json
+{
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.2",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.4.1"
+  }
+}
+```
+
+Please run:
+```bash
+npm install
+```
+
+After that, the `./node_modules/.bin/tailwindcss` command should work. The error was due to an invalid version number that couldn't be installed properly.
+
+---
+
 
 
 ---
