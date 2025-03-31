@@ -25,5 +25,5 @@ jobs:
         python -m pip install uv
         uv venv
         uv pip install -e .
-        uv pip install pytest
+        uv pip install pytest pillow
         uv run pytest

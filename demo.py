@@ -36,11 +36,8 @@ def _(widget):
 
 
 @app.cell
-def _(img, mo, widget):
-    mo.hstack([
-        img(src=widget.value["base64"]),  # Use base64 representation directly with mohtml
-        widget.get_pil()                  # Retreive the Python PIL object instead
-    ])
+def _(img, widget):
+    img(src=widget.value["base64"])  # Use base64 representation directly with mohtml
     return
 
 
