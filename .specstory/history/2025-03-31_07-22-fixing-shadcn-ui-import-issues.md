@@ -284,6 +284,61 @@ After that, the `./node_modules/.bin/tailwindcss` command should work. The error
 
 ---
 
+_**User**_
+
+It feels like the styles are being overwritten in marimo. Any idea what we might do with the css to make it more strict? 
+
+---
+
+_**Assistant**_
+
+
+
+Yes! We can make the Tailwind styles more specific by adding a root class to our component and using CSS nesting to ensure our styles take precedence. Here's how to modify the widget:
+
+```typescript:js/draw/widget.tsx
+// ... existing code ...
+
+function Component() {
+  // ... existing state and refs ...
+
+  return (
+    <div className="mopaint-widget bg-teal-600 overflow-hidden" style={{ height: '450px' }}>
+      {/* ... rest of the JSX ... */}
+    </div>
+  );
+}
+```
+
+Then update your styles.css to make all styles more specific:
+
+```css:js/draw/styles.css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Make all styles more specific by nesting under our widget class */
+.mopaint-widget {
+  /* Reset styles to prevent inheritance */
+  all: initial;
+  
+  /* Re-enable display */
+  display: block;
+  
+  /* Ensure our styles take precedence */
+  & button {
+    all: unset;
+    cursor: pointer;
+    &:disabled {
+      cursor: not-allowed;
+    }
+  }
+
+  & * {
+    font
+
+---
+
 
 
 ---

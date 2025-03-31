@@ -1,7 +1,19 @@
 import { createRender, useModelState } from "@anywidget/react";
 import React, { useRef, useState, useEffect } from 'react';
 import './styles.css';
-// ... rest of your imports
+
+
+const blobToBase64 = blob => {
+  const reader = new FileReader();
+  reader.readAsDataURL(blob);
+  return new Promise(resolve => {
+    reader.onloadend = () => {
+      resolve(reader.result);
+    };
+  });
+};
+
+
 const Button = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -37,6 +49,8 @@ function Component() {
   const [tool, setTool] = useState('brush');
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  let [base64, setBase64] = useModelState<string>("base64")
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -78,6 +92,11 @@ function Component() {
 
   const stopDrawing = () => {
     setIsDrawing(false);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      base64 = canvas.toDataURL('image/png');
+    }
+    setBase64(base64 as string);
   };
 
   const startDragging = (e: React.MouseEvent<HTMLDivElement>) => {

@@ -24,7 +24,7 @@ class Paint(anywidget.AnyWidget):
     """Initialize a Draw widget based on tldraw.
     """
     _esm = Path(__file__).parent / 'static' / 'draw.js'
-    _css = Path(__file__).parent / 'static' / 'draw.css'
+    _css = Path(__file__).parent / 'static' / 'styles.css'
     width = traitlets.Int(800).tag(sync=True)
     height = traitlets.Int(500).tag(sync=True)
     base64 = traitlets.Unicode("").tag(sync=True)
