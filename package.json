@@ -1,0 +1,21 @@
+{
+  "name": "modraw",
+  "scripts": {
+    "build-draw": "./node_modules/.bin/esbuild js/draw/widget.tsx --bundle --outfile=modraw/static/draw.js --format=esm --minify",
+    "dev-draw": "./node_modules/.bin/esbuild js/draw/widget.tsx --bundle --outfile=modraw/static/draw.js --format=esm --watch --minify"
+  },
+  "dependencies": {
+    "@anywidget/react": "^0.1.0",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@radix-ui/themes": "^3.2.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "esbuild": "^0.25.1",
+    "lucide-react": "^0.485.0",
+    "radix-ui": "^1.1.3",
+    "react": "^19.0.0",
+    "tailwind-merge": "^3.0.2",
+    "tldraw": "^3.11.0",
+    "tw-animate-css": "^1.2.5"
+  }
+}
