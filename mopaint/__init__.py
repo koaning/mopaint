@@ -1,9 +1,7 @@
 import base64
-from typing import List
 from pathlib import Path
 import anywidget
 import traitlets
-from PIL import Image
 from io import BytesIO
 
 
@@ -27,7 +25,9 @@ class Paint(anywidget.AnyWidget):
     _css = Path(__file__).parent / 'static' / 'styles.css'
     base64 = traitlets.Unicode("").tag(sync=True)
     
-    def get_pil(self) -> Image.Image:
+    def get_pil(self):
+        from PIL import Image
+
         if not self.base64:
             raise ValueError("No base64 image data available, make sure you draw something first.")
         return base64_to_pil(self.base64)

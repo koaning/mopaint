@@ -3,8 +3,7 @@ from setuptools import setup, find_packages
 
 
 base_packages = [
-    "anywidget>=0.9.2", 
-    "pillow>=11.1.0"
+    "anywidget>=0.9.2"
 ]
 
 def read(fname):
@@ -13,7 +12,7 @@ def read(fname):
 
 setup(
     name="mopaint",
-    version="0.1.1",
+    version="0.1.3",
     description="Paint for marimo",
     author="Vincent D. Warmerdam",
     packages=find_packages(exclude=["notebooks"]),
