@@ -123,7 +123,7 @@ function Component() {
   };
 
   return (
-    <div className="bg-teal-600 overflow-hidden" style={{ height: '450px' }}>
+    <div className="bg-teal-600 overflow-hidden" style={{ height: '500px' }}>
       <div 
         ref={containerRef}
         className="absolute bg-gray-200 border-2 border-white shadow-md" 
