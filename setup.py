@@ -13,11 +13,11 @@ def read(fname):
 
 setup(
     name="mopaint",
-    version="0.1.0",
+    version="0.1.1",
     description="Paint for marimo",
     author="Vincent D. Warmerdam",
     packages=find_packages(exclude=["notebooks"]),
-    package_data={"modraw": ["static/*.js", "static/*.css"]},
+    package_data={"mopaint": ["static/*.js", "static/*.css"]},
     long_description=read("README.md"),
     long_description_content_type="text/markdown",
     install_requires=base_packages,
