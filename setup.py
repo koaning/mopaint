@@ -12,9 +12,9 @@ def read(fname):
 
 
 setup(
-    name="modraw",
+    name="mopaint",
     version="0.1.0",
-    description="Collection of Anywidget Widgets",
+    description="Paint for marimo",
     author="Vincent D. Warmerdam",
     packages=find_packages(exclude=["notebooks"]),
     package_data={"modraw": ["static/*.js", "static/*.css"]},
