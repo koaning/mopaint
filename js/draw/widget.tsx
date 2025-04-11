@@ -49,16 +49,55 @@ function Component() {
   const [tool, setTool] = useState('brush');
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
-  let [base64, setBase64] = useModelState<string>("base64")
-
+  let [base64, setBase64] = useModelState<string>("base64");
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
-    if (context) {
-      context.fillStyle = '#FFFFFF';
-      context.fillRect(0, 0, canvas.width, canvas.height);
+    const resizeCanvas = () => {
+      const canvas = canvasRef.current;
+      const container = canvas?.parentElement;
+      if (canvas && container) {
+        const newWidth = container.clientWidth;
+        const newHeight = container.clientHeight;
+        
+        // Only try to get image data if the canvas has valid dimensions
+        let imageData: ImageData | undefined;
+        if (canvas.width > 0 && canvas.height > 0) {
+          const context = canvas.getContext('2d');
+          if (context) {
+            imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+          }
+        }
+        
+        // Update canvas size
+        setCanvasSize({ width: newWidth, height: newHeight });
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        
+        // Restore the image data or set initial background
+        const context = canvas.getContext('2d');
+        if (context) {
+          if (imageData) {
+            context.putImageData(imageData, 0, 0);
+          } else {
+            // Initial white background
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+      }
+    };
+
+    // Create resize observer
+    const resizeObserver = new ResizeObserver(resizeCanvas);
+    if (canvasRef.current?.parentElement) {
+      resizeObserver.observe(canvasRef.current.parentElement);
     }
+
+    // Initial resize
+    resizeCanvas();
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -123,11 +162,19 @@ function Component() {
   };
 
   return (
-    <div className="bg-teal-600 overflow-hidden" style={{ height: '500px' }}>
+    <div className="bg-white w-full h-full overflow-hidden" style={{ minHeight: '500px' }}>
       <div 
         ref={containerRef}
-        className="absolute bg-gray-200 border-2 border-white shadow-md" 
-        style={{ width: '800px', height: '450px', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+        className="absolute bg-white border-2 border-gray-200 shadow-md" 
+        style={{ 
+          width: '90%', 
+          height: '90%', 
+          left: '50%', 
+          top: '50%', 
+          transform: 'translate(-50%, -50%)',
+          minWidth: '400px',
+          minHeight: '300px'
+        }}
       >
         <div 
           className="bg-blue-900 text-white px-2 py-1 flex justify-between items-center cursor-move"
@@ -151,7 +198,7 @@ function Component() {
           <span className="mr-4">Options</span>
           <span>Help</span>
         </div>
-        <div className="flex">
+        <div className="flex flex-1" style={{ height: 'calc(100% - 8rem)' }}>
           <div className="w-8 bg-gray-300 p-0.5 border-r border-gray-400">
             <Button
               variant="ghost"
@@ -174,15 +221,16 @@ function Component() {
               </svg>
             </Button>
           </div>
-          <div className="flex-grow overflow-auto border border-gray-400" style={{ width: '724px', height: '330px' }}>
+          <div className="flex-grow overflow-hidden border border-gray-400">
             <canvas
               ref={canvasRef}
-              width={724}
-              height={330}
+              width={canvasSize.width}
+              height={canvasSize.height}
               onMouseDown={startDrawing}
               onMouseMove={draw}
               onMouseUp={stopDrawing}
               onMouseOut={stopDrawing}
+              style={{ width: '100%', height: '100%' }}
             />
           </div>
         </div>
