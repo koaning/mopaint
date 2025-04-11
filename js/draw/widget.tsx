@@ -50,6 +50,7 @@ function Component() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   let [base64, setBase64] = useModelState<string>("base64");
+  let [height, setHeight] = useModelState<number>("height", 500);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -123,7 +124,7 @@ function Component() {
       const y = e.clientY - rect.top;
       context.lineTo(x, y);
       context.strokeStyle = tool === 'eraser' ? '#FFFFFF' : color;
-      context.lineWidth = tool === 'eraser' ? 20 : 2;
+      context.lineWidth = tool === 'eraser' ? 20 : tool === 'marker' ? 8 : 2;
       context.lineCap = 'round';
       context.stroke();
     }
@@ -162,7 +163,7 @@ function Component() {
   };
 
   return (
-    <div className="bg-white w-full h-full overflow-hidden" style={{ minHeight: '500px' }}>
+    <div className="bg-teal-600 w-full overflow-hidden" style={{ height: `${height}px` }}>
       <div 
         ref={containerRef}
         className="absolute bg-white border-2 border-gray-200 shadow-md" 
@@ -207,6 +208,15 @@ function Component() {
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+              </svg>
+            </Button>
+            <Button
+              variant="ghost"
+              className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'marker' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
+              onClick={() => setTool('marker')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11" />
               </svg>
             </Button>
             <Button

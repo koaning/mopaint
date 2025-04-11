@@ -815,10 +815,6 @@ select {
   height: 1.75rem;
 }
 
-.h-full {
-  height: 100%;
-}
-
 .w-5 {
   width: 1.25rem;
 }
@@ -930,6 +926,11 @@ select {
 .bg-gray-300 {
   --tw-bg-opacity: 1;
   background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1));
+}
+
+.bg-teal-600 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(13 148 136 / var(--tw-bg-opacity, 1));
 }
 
 .bg-white {

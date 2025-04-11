@@ -26,6 +26,7 @@ class Paint(anywidget.AnyWidget):
     _esm = Path(__file__).parent / 'static' / 'draw.js'
     _css = Path(__file__).parent / 'static' / 'styles.css'
     base64 = traitlets.Unicode("").tag(sync=True)
+    height = traitlets.Int(500).tag(sync=True)
     
     def get_pil(self):
         if not self.base64:
