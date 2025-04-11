@@ -8,6 +8,8 @@ from io import BytesIO
 def base64_to_pil(base64_string):
     """Convert a base64 string to PIL Image"""
     # Remove the data URL prefix if it exists
+    from PIL import Image
+
     if 'base64,' in base64_string:
         base64_string = base64_string.split('base64,')[1]
 
@@ -26,8 +28,6 @@ class Paint(anywidget.AnyWidget):
     base64 = traitlets.Unicode("").tag(sync=True)
     
     def get_pil(self):
-        from PIL import Image
-
         if not self.base64:
             raise ValueError("No base64 image data available, make sure you draw something first.")
         return base64_to_pil(self.base64)

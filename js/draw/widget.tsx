@@ -206,8 +206,7 @@ function Component() {
               onClick={() => setTool('brush')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M18 12l-8-8-6 6c-2 2-2 5 0 7s5 2 7 0l7-7" />
-                <path d="M17 7l3 3" />
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </Button>
             <Button
@@ -216,8 +215,8 @@ function Component() {
               onClick={() => setTool('eraser')}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M20 20H7L3 16C2 15 2 13 3 12L13 2L22 11L20 20Z" />
-                <path d="M17 17L7 7" />
+                <path d="M18 13L11 20L4 13L11 6L18 13Z" />
+                <path d="M20 20H8" />
               </svg>
             </Button>
           </div>
