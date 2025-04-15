@@ -37,8 +37,7 @@ const Button = React.forwardRef<
 Button.displayName = 'Button';
 
 const colors = [
-  '#000000', '#808080', '#800000', '#808000', '#008000', '#008080', '#000080', '#800080', '#808040', '#004040', '#0080FF', '#004080', '#8000FF', '#804000',
-  '#FFFFFF', '#C0C0C0', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FFFF80', '#00FF80', '#80FFFF', '#8080FF', '#FF0080', '#FF8040'
+  '#000000', '#FFFFFF', '#C0C0C0', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FFFF80', '#00FF80', '#80FFFF', '#8080FF', '#FF0080'
 ];
 
 function Component() {
@@ -195,7 +194,7 @@ function Component() {
           <span className="mr-4 text-black">Options</span>
           <span className="text-black">Help</span>
         </div>
-        <div className="flex flex-1" style={{ height: 'calc(100% - 8rem)' }}>
+        <div className="flex flex-1 flex-grow" style={{ height: 'calc(100% - 7.5rem)' }}>
           <div className="w-8 bg-gray-300 p-0.5 border-r border-gray-400">
             <Button
               variant="ghost"

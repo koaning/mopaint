@@ -12,7 +12,7 @@ def read(fname):
 
 setup(
     name="mopaint",
-    version="0.1.4",
+    version="0.1.5",
     description="Paint for marimo",
     author="Vincent D. Warmerdam",
     packages=find_packages(exclude=["notebooks"]),
