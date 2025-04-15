@@ -180,20 +180,20 @@ function Component() {
           onMouseUp={stopDragging}
           onMouseLeave={stopDragging}
         >
-          <span>untitled - Paint</span>
+          <span className="text-white">untitled - Paint</span>
           <div className="flex gap-1">
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">_</Button>
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">□</Button>
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">×</Button>
           </div>
         </div>
-        <div className="bg-gray-300 px-2 py-1 text-sm">
-          <span className="mr-4">File</span>
-          <span className="mr-4">Edit</span>
-          <span className="mr-4">View</span>
-          <span className="mr-4">Image</span>
-          <span className="mr-4">Options</span>
-          <span>Help</span>
+        <div className="bg-gray-300 px-2 py-1 text-sm text-black">
+          <span className="mr-4 text-black">File</span>
+          <span className="mr-4 text-black">Edit</span>
+          <span className="mr-4 text-black">View</span>
+          <span className="mr-4 text-black">Image</span>
+          <span className="mr-4 text-black">Options</span>
+          <span className="text-black">Help</span>
         </div>
         <div className="flex flex-1" style={{ height: 'calc(100% - 8rem)' }}>
           <div className="w-8 bg-gray-300 p-0.5 border-r border-gray-400">
@@ -202,7 +202,7 @@ function Component() {
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'brush' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('brush')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </Button>
@@ -211,7 +211,7 @@ function Component() {
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'marker' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('marker')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
                 <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11" />
               </svg>
             </Button>
@@ -220,7 +220,7 @@ function Component() {
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'eraser' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('eraser')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
                 <path d="M18 13L11 20L4 13L11 6L18 13Z" />
                 <path d="M20 20H8" />
               </svg>
@@ -252,7 +252,7 @@ function Component() {
             ))}
           </div>
         </div>
-        <div className="bg-gray-300 px-2 py-1 text-sm border-t border-gray-400">
+        <div className="bg-gray-300 px-2 py-1 text-sm border-t border-gray-400 text-black">
           For Help, click Help Topics on the Help Menu.
         </div>
       </div>
