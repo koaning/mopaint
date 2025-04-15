@@ -11,7 +11,7 @@
 
 import marimo
 
-__generated_with = "0.11.31"
+__generated_with = "0.12.8"
 app = marimo.App(width="medium")
 
 
@@ -25,7 +25,7 @@ def _():
 
 @app.cell
 def _(Paint, mo):
-    widget = mo.ui.anywidget(Paint(width=1000, height=450))
+    widget = mo.ui.anywidget(Paint(height=450, store_background=True))
     return (widget,)
 
 
@@ -37,7 +37,18 @@ def _(widget):
 
 @app.cell
 def _(img, widget):
-    img(src=widget.value["base64"])  # Use base64 representation directly with mohtml
+    img(src=widget.get_base64())  # Use base64 representation directly with mohtml
+    return
+
+
+@app.cell
+def _(widget):
+    widget.get_pil()
+    return
+
+
+@app.cell
+def _():
     return
 
 

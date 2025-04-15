@@ -50,7 +50,9 @@ function Component() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   let [base64, setBase64] = useModelState<string>("base64");
-  let [height, setHeight] = useModelState<number>("height", 500);
+  let [height, setHeight] = useModelState<number>("height");
+  
+
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -61,30 +63,20 @@ function Component() {
         const newWidth = container.clientWidth;
         const newHeight = container.clientHeight;
         
-        // Only try to get image data if the canvas has valid dimensions
-        let imageData: ImageData | undefined;
-        if (canvas.width > 0 && canvas.height > 0) {
-          const context = canvas.getContext('2d');
-          if (context) {
-            imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          }
-        }
-        
         // Update canvas size
         setCanvasSize({ width: newWidth, height: newHeight });
         canvas.width = newWidth;
         canvas.height = newHeight;
         
-        // Restore the image data or set initial background
+        // Reset the canvas to an empty state with white background
         const context = canvas.getContext('2d');
         if (context) {
-          if (imageData) {
-            context.putImageData(imageData, 0, 0);
-          } else {
-            // Initial white background
-            context.fillStyle = '#FFFFFF';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-          }
+          context.fillStyle = '#FFFFFF';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Update the base64 representation to reflect the empty state
+          const emptyBase64 = canvas.toDataURL('image/png');
+          setBase64(emptyBase64);
         }
       }
     };
@@ -103,7 +95,9 @@ function Component() {
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
+    if (!canvas) return;
+    
+    const context = canvas.getContext('2d');
     if (context) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -117,7 +111,9 @@ function Component() {
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
+    if (!canvas) return;
+    
+    const context = canvas.getContext('2d');
     if (context) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
