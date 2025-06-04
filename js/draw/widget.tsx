@@ -3,17 +3,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import './styles.css';
 
 
-const blobToBase64 = blob => {
-  const reader = new FileReader();
-  reader.readAsDataURL(blob);
-  return new Promise(resolve => {
-    reader.onloadend = () => {
-      resolve(reader.result);
-    };
-  });
-};
-
-
 const Button = React.forwardRef<
   HTMLButtonElement,
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -37,8 +26,7 @@ const Button = React.forwardRef<
 Button.displayName = 'Button';
 
 const colors = [
-  '#000000', '#808080', '#800000', '#808000', '#008000', '#008080', '#000080', '#800080', '#808040', '#004040', '#0080FF', '#004080', '#8000FF', '#804000',
-  '#FFFFFF', '#C0C0C0', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FFFF80', '#00FF80', '#80FFFF', '#8080FF', '#FF0080', '#FF8040'
+  '#000000', '#FFFFFF', '#C0C0C0', '#FF0000', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF', '#FF00FF', '#FFFF80', '#00FF80', '#80FFFF', '#8080FF', '#FF0080'
 ];
 
 function Component() {
@@ -50,7 +38,9 @@ function Component() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   let [base64, setBase64] = useModelState<string>("base64");
-  let [height, setHeight] = useModelState<number>("height", 500);
+  let [height, setHeight] = useModelState<number>("height");
+  
+
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
@@ -61,30 +51,20 @@ function Component() {
         const newWidth = container.clientWidth;
         const newHeight = container.clientHeight;
         
-        // Only try to get image data if the canvas has valid dimensions
-        let imageData: ImageData | undefined;
-        if (canvas.width > 0 && canvas.height > 0) {
-          const context = canvas.getContext('2d');
-          if (context) {
-            imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-          }
-        }
-        
         // Update canvas size
         setCanvasSize({ width: newWidth, height: newHeight });
         canvas.width = newWidth;
         canvas.height = newHeight;
         
-        // Restore the image data or set initial background
+        // Reset the canvas to an empty state with white background
         const context = canvas.getContext('2d');
         if (context) {
-          if (imageData) {
-            context.putImageData(imageData, 0, 0);
-          } else {
-            // Initial white background
-            context.fillStyle = '#FFFFFF';
-            context.fillRect(0, 0, canvas.width, canvas.height);
-          }
+          context.fillStyle = '#FFFFFF';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Update the base64 representation to reflect the empty state
+          const emptyBase64 = canvas.toDataURL('image/png');
+          setBase64(emptyBase64);
         }
       }
     };
@@ -103,7 +83,9 @@ function Component() {
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
+    if (!canvas) return;
+    
+    const context = canvas.getContext('2d');
     if (context) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -117,7 +99,9 @@ function Component() {
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing) return;
     const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
+    if (!canvas) return;
+    
+    const context = canvas.getContext('2d');
     if (context) {
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
@@ -184,29 +168,30 @@ function Component() {
           onMouseUp={stopDragging}
           onMouseLeave={stopDragging}
         >
-          <span>untitled - Paint</span>
+          <span className="text-white">untitled - Paint</span>
           <div className="flex gap-1">
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">_</Button>
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">□</Button>
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">×</Button>
           </div>
         </div>
-        <div className="bg-gray-300 px-2 py-1 text-sm">
-          <span className="mr-4">File</span>
-          <span className="mr-4">Edit</span>
-          <span className="mr-4">View</span>
-          <span className="mr-4">Image</span>
-          <span className="mr-4">Options</span>
-          <span>Help</span>
+        <div className="bg-gray-300 px-2 py-1 text-sm text-black">
+          <span className="mr-4 text-black">File</span>
+          <span className="mr-4 text-black">Edit</span>
+          <span className="mr-4 text-black">View</span>
+          <span className="mr-4 text-black">Image</span>
+          <span className="mr-4 text-black">Options</span>
+          <span className="text-black">Help</span>
         </div>
-        <div className="flex flex-1" style={{ height: 'calc(100% - 8rem)' }}>
+        <div className="flex flex-1 flex-grow" style={{ height: 'calc(100% - 7.5rem)' }}>
           <div className="w-8 bg-gray-300 p-0.5 border-r border-gray-400">
             <Button
               variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'brush' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('brush')}
+              title="Brush"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </Button>
@@ -214,19 +199,45 @@ function Component() {
               variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'marker' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('marker')}
+              title="Thick Marker"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </Button>
             <Button
               variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'eraser' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('eraser')}
+              title="Eraser"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M18 13L11 20L4 13L11 6L18 13Z" />
-                <path d="M20 20H8" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-black">
+                <path d="M7 21h10"/>
+                <path d="M5.5 13.5L13 6c.83-.83 2.17-.83 3 0l2 2c.83.83.83 2.17 0 3l-7.5 7.5c-.83.83-2.17.83-3 0l-2-2c-.83-.83-.83-2.17 0-3z"/>
+              </svg>
+            </Button>
+            <div className="w-7 h-0.5 bg-gray-400 my-1"></div>
+            <Button
+              variant="ghost"
+              className="w-7 h-7 p-0 min-w-0 mb-0.5"
+              onClick={() => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                  const context = canvas.getContext('2d');
+                  if (context) {
+                    context.fillStyle = '#FFFFFF';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    setBase64(canvas.toDataURL('image/png'));
+                  }
+                }
+              }}
+              title="Clear Canvas"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M8 16H3v5"/>
               </svg>
             </Button>
           </div>
@@ -256,7 +267,7 @@ function Component() {
             ))}
           </div>
         </div>
-        <div className="bg-gray-300 px-2 py-1 text-sm border-t border-gray-400">
+        <div className="bg-gray-300 px-2 py-1 text-sm border-t border-gray-400 text-black">
           For Help, click Help Topics on the Help Menu.
         </div>
       </div>
