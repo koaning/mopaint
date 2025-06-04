@@ -189,6 +189,7 @@ function Component() {
               variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'brush' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('brush')}
+              title="Brush"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
                 <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -198,19 +199,45 @@ function Component() {
               variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'marker' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('marker')}
+              title="Thick Marker"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
-                <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11" />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
               </svg>
             </Button>
             <Button
               variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${tool === 'eraser' ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setTool('eraser')}
+              title="Eraser"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-black">
+                <path d="M7 21h10"/>
+                <path d="M5.5 13.5L13 6c.83-.83 2.17-.83 3 0l2 2c.83.83.83 2.17 0 3l-7.5 7.5c-.83.83-2.17.83-3 0l-2-2c-.83-.83-.83-2.17 0-3z"/>
+              </svg>
+            </Button>
+            <div className="w-7 h-0.5 bg-gray-400 my-1"></div>
+            <Button
+              variant="ghost"
+              className="w-7 h-7 p-0 min-w-0 mb-0.5"
+              onClick={() => {
+                const canvas = canvasRef.current;
+                if (canvas) {
+                  const context = canvas.getContext('2d');
+                  if (context) {
+                    context.fillStyle = '#FFFFFF';
+                    context.fillRect(0, 0, canvas.width, canvas.height);
+                    setBase64(canvas.toDataURL('image/png'));
+                  }
+                }
+              }}
+              title="Clear Canvas"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
-                <path d="M18 13L11 20L4 13L11 6L18 13Z" />
-                <path d="M20 20H8" />
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M8 16H3v5"/>
               </svg>
             </Button>
           </div>

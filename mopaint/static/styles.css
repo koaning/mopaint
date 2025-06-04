@@ -787,6 +787,11 @@ select {
   position: absolute;
 }
 
+.my-1 {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
 .mb-0\.5 {
   margin-bottom: 0.125rem;
 }
@@ -801,6 +806,10 @@ select {
 
 .inline-flex {
   display: inline-flex;
+}
+
+.h-0\.5 {
+  height: 0.125rem;
 }
 
 .h-5 {
@@ -926,6 +935,11 @@ select {
 .bg-gray-300 {
   --tw-bg-opacity: 1;
   background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1));
+}
+
+.bg-gray-400 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(156 163 175 / var(--tw-bg-opacity, 1));
 }
 
 .bg-teal-600 {

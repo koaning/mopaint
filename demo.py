@@ -1,7 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = [
-#     "anthropic==0.49.0",
+# dependencies = 
 #     "anywidget==0.9.18",
 #     "marimo",
 #     "mohtml==0.1.4",
@@ -25,7 +24,7 @@ def _():
 
 @app.cell
 def _(Paint, mo):
-    widget = mo.ui.anywidget(Paint(height=450, store_background=True, background_color="#000000"))
+    widget = mo.ui.anywidget(Paint(height=450, store_background=True))
     return (widget,)
 
 
