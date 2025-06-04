@@ -1,6 +1,6 @@
 import pytest
 from PIL import Image
-from mopaint import Paint, base64_to_pil
+from mopaint import Paint, base64_to_pil, pil_to_base64, create_empty_image
 
 
 def test_init_with_pil_image():
