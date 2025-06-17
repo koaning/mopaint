@@ -1089,29 +1089,23 @@ select {
   --tw-ring-color: rgb(75 85 99 / var(--tw-ring-opacity, 1));
 }
 
-.transition-colors {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
 .hover\:bg-blue-700:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(29 78 216 / var(--tw-bg-opacity, 1));
 }
 
-.hover\:bg-gray-100\/50:hover {
-  background-color: rgb(243 244 246 / 0.5);
-}
-
-.hover\:bg-gray-300:hover {
-  --tw-bg-opacity: 1;
-  background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1));
-}
-
 .focus-visible\:outline-none:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
+}
+
+.active\:bg-gray-100\/50:active {
+  background-color: rgb(243 244 246 / 0.5);
+}
+
+.active\:bg-gray-300:active {
+  --tw-bg-opacity: 1;
+  background-color: rgb(209 213 219 / var(--tw-bg-opacity, 1));
 }
 
 .disabled\:pointer-events-none:disabled {

@@ -191,31 +191,17 @@ class Paint(anywidget.AnyWidget):
         Returns
         -------
         PIL.Image.Image
-            The current drawing as a PIL Image. If no drawing exists and store_background
-            is True, returns a white image. If store_background is False, returns a
-            transparent image.
+            The current drawing as a PIL Image. If no drawing exists, returns an empty
+            transparent image with the correct dimensions.
         """
         from PIL import Image
         
-        # If base64 is empty, return an empty image with the correct dimensions
+        # If base64 is empty, return an empty transparent image with the correct dimensions
         if not self.base64:
-            if self.store_background:
-                # Return white background
-                img = create_empty_image(width=self.width, height=self.height, background_color=(255, 255, 255, 255))
-            else:
-                # Return transparent background
-                img = create_empty_image(width=self.width, height=self.height, background_color=(0, 0, 0, 0))
-        else:
-            # Get the original image
-            img = base64_to_pil(self.base64)
-            
-            # If store_background is True and the image has transparency,
-            # composite it onto a white background
-            if self.store_background and 'A' in img.mode:
-                background = Image.new('RGBA', img.size, (255, 255, 255, 255))
-                img = Image.alpha_composite(background, img)
+            return create_empty_image(width=self.width, height=self.height, background_color=(0, 0, 0, 0))
         
-        return img
+        # Get the image from base64
+        return base64_to_pil(self.base64)
     
     def get_base64(self) -> str:
         # Return empty string if no image has been drawn

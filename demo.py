@@ -28,7 +28,7 @@ def _():
 def _(Paint, mo):
     widget = mo.ui.anywidget(
         Paint(
-            height=450,
+            height=550,
             store_background=False,
             show_grid=True,
         )
