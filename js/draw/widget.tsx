@@ -355,6 +355,23 @@ function Component() {
     setDragging(false);
   };
 
+  const GridIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="3" y1="15" x2="21" y2="15"></line>
+      <line x1="9" y1="3" x2="9" y2="21"></line>
+      <line x1="15" y1="3" x2="15" y2="21"></line>
+    </svg>
+  );
+
+  const BackgroundIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <rect x="7" y="7" width="10" height="10" rx="1" ry="1" fill="currentColor" fillOpacity="0.2"></rect>
+    </svg>
+  );
+
   return (
     <div className="bg-teal-600 w-full overflow-hidden" style={{ height: `${height}px` }}>
       {error && (
@@ -370,7 +387,7 @@ function Component() {
       )}
       <div 
         ref={containerRef}
-        className="absolute bg-white border-2 border-gray-200 shadow-md" 
+        className="absolute bg-white border-2 border-gray-200 shadow-md flex flex-col" 
         style={{ 
           width: '90%', 
           height: '90%', 
@@ -381,6 +398,7 @@ function Component() {
           minHeight: '300px'
         }}
       >
+        {/* Title bar */}
         <div 
           className="bg-blue-900 text-white px-2 py-1 flex justify-between items-center cursor-move"
           onMouseDown={startDragging}
@@ -395,6 +413,8 @@ function Component() {
             <Button variant="ghost" className="h-5 w-5 p-0 min-w-0 text-white hover:bg-blue-700">×</Button>
           </div>
         </div>
+
+        {/* Menu bar */}
         <div className="bg-gray-300 px-2 py-1 text-sm text-black">
           <span className="mr-4 text-black">File</span>
           <span className="mr-4 text-black">Edit</span>
@@ -403,7 +423,10 @@ function Component() {
           <span className="mr-4 text-black">Options</span>
           <span className="text-black">Help</span>
         </div>
-        <div className="flex flex-1 flex-grow" style={{ height: 'calc(100% - 7.5rem)' }}>
+
+        {/* Main content area */}
+        <div className="flex flex-1 min-h-0">
+          {/* Left toolbar */}
           <div className="w-8 bg-gray-300 p-0.5 border-r border-gray-400">
             <Button
               variant="ghost"
@@ -450,13 +473,7 @@ function Component() {
               }}
               title="Show Grid"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
-                <rect x="3" y="3" width="18" height="18" />
-                <path d="M9 3v18" />
-                <path d="M15 3v18" />
-                <path d="M3 9h18" />
-                <path d="M3 15h18" />
-              </svg>
+              <GridIcon />
             </Button>
             <Button
               variant="ghost"
@@ -469,15 +486,15 @@ function Component() {
               disabled={!showGrid}
               title={showGrid ? "Keep Grid in Output" : "Enable 'Show Grid' first"}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
-                <rect x="3" y="3" width="18" height="18" />
-                <path d="M9 3v18" />
-                <path d="M15 3v18" />
-                <path d="M3 9h18" />
-                <path d="M3 15h18" />
-                <path d="M12 8l-4 4 4 4" />
-                <path d="m8 12 4 0" />
-              </svg>
+              <GridIcon />
+            </Button>
+            <Button
+              variant="ghost"
+              className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${storeBackground ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
+              onClick={() => setStoreBackground(!storeBackground)}
+              title="Store White Background"
+            >
+              <BackgroundIcon />
             </Button>
             <div className="w-7 h-0.5 bg-gray-400 my-1"></div>
             <Button
@@ -500,20 +517,6 @@ function Component() {
                     drawGridOnContext(gridContext, gridCanvas.width, gridCanvas.height, showGrid);
                   }
                 }
-                // Update the output image
-                if (storeGrid && showGrid && gridCanvasRef.current && drawingCanvasRef.current) {
-                  const tempCanvas = document.createElement('canvas');
-                  tempCanvas.width = drawingCanvasRef.current.width;
-                  tempCanvas.height = drawingCanvasRef.current.height;
-                  const tempContext = tempCanvas.getContext('2d');
-                  if (tempContext) {
-                    tempContext.drawImage(gridCanvasRef.current, 0, 0);
-                    tempContext.drawImage(drawingCanvasRef.current, 0, 0);
-                    setBase64(tempCanvas.toDataURL('image/png'));
-                  }
-                } else if (drawingCanvasRef.current) {
-                  setBase64(drawingCanvasRef.current.toDataURL('image/png'));
-                }
               }}
               title="Clear Canvas"
             >
@@ -525,6 +528,8 @@ function Component() {
               </svg>
             </Button>
           </div>
+
+          {/* Canvas area */}
           <div className="flex-grow overflow-hidden border border-gray-400 relative">
             {/* Grid canvas - underneath */}
             <canvas
@@ -547,10 +552,6 @@ function Component() {
               ref={drawingCanvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
-              onMouseUp={stopDrawing}
-              onMouseOut={stopDrawing}
               style={{ 
                 width: '100%', 
                 height: '100%',
@@ -560,9 +561,15 @@ function Component() {
                 zIndex: 2,
                 background: 'transparent'
               }}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
             />
           </div>
         </div>
+
+        {/* Bottom color picker */}
         <div className="flex bg-gray-300 p-1 border-t border-gray-400">
           <div className="flex flex-wrap gap-1">
             {colors.map((c) => (
@@ -576,7 +583,9 @@ function Component() {
             ))}
           </div>
         </div>
-        <div className="bg-gray-300 px-2 py-1 text-sm border-t border-gray-400 text-black">
+
+        {/* Status bar */}
+        <div className="bg-gray-300 px-2 py-1 text-xs border-t border-gray-400 text-black">
           For Help, click Help Topics on the Help Menu.
         </div>
       </div>
