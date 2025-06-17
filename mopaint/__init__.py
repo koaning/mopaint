@@ -59,7 +59,7 @@ class Paint(anywidget.AnyWidget):
         Default is None (empty canvas).
     show_grid : bool, optional
         Whether to show a grid overlay on the canvas. Default is False.
-    keep_grid : bool, optional
+    store_grid : bool, optional
         Whether to include the grid in the exported image. Requires show_grid=True.
         Default is False.
     
@@ -92,9 +92,9 @@ class Paint(anywidget.AnyWidget):
     width = traitlets.Int(889).tag(sync=True)  # Default to 16:9 aspect ratio with height 500
     store_background = traitlets.Bool(True).tag(sync=True)
     show_grid = traitlets.Bool(False).tag(sync=True)
-    keep_grid = traitlets.Bool(False).tag(sync=True)
+    store_grid = traitlets.Bool(False).tag(sync=True)
     
-    def __init__(self, height=500, width=889, store_background=True, initial_image=None, show_grid=False, keep_grid=False):
+    def __init__(self, height=500, width=889, store_background=True, initial_image=None, show_grid=False, store_grid=False):
         """Initialize the Paint widget.
         
         Parameters
@@ -112,13 +112,13 @@ class Paint(anywidget.AnyWidget):
             to fit the canvas dimensions if necessary. Default is None (empty canvas).
         show_grid : bool, optional
             Whether to show a grid overlay on the canvas. Default is False.
-        keep_grid : bool, optional
+        store_grid : bool, optional
             Whether to include the grid in the exported image. Requires show_grid=True.
             Default is False.
         """
         # Validate grid parameters
-        if keep_grid and not show_grid:
-            raise ValueError("keep_grid cannot be True when show_grid is False. "
+        if store_grid and not show_grid:
+            raise ValueError("store_grid cannot be True when show_grid is False. "
                            "To include the grid in the output, you must first make it visible with show_grid=True.")
         
         super().__init__()
@@ -126,7 +126,7 @@ class Paint(anywidget.AnyWidget):
         self.width = width
         self.store_background = store_background
         self.show_grid = show_grid
-        self.keep_grid = keep_grid
+        self.store_grid = store_grid
         
         # Handle initial image
         if initial_image is None:
@@ -173,20 +173,29 @@ class Paint(anywidget.AnyWidget):
             else:
                 self.base64 = pil_to_base64(initial_image)
     
-    @traitlets.observe('keep_grid', 'show_grid')
+    @traitlets.observe('store_grid', 'show_grid')
     def _validate_grid_params(self, change):
         """Validate grid parameters when they change."""
-        if self.keep_grid and not self.show_grid:
-            # Reset keep_grid to False if show_grid becomes False
+        if self.store_grid and not self.show_grid:
+            # Reset store_grid to False if show_grid becomes False
             if change['name'] == 'show_grid' and not change['new']:
-                self.keep_grid = False
-            # Prevent setting keep_grid to True when show_grid is False
-            elif change['name'] == 'keep_grid' and change['new']:
-                raise ValueError("keep_grid cannot be True when show_grid is False. "
+                self.store_grid = False
+            # Prevent setting store_grid to True when show_grid is False
+            elif change['name'] == 'store_grid' and change['new']:
+                raise ValueError("store_grid cannot be True when show_grid is False. "
                                "To include the grid in the output, you must first make it visible with show_grid=True.")
     
     def get_pil(self):
-        from PIL import Image, ImageDraw
+        """Get the current drawing as a PIL Image.
+        
+        Returns
+        -------
+        PIL.Image.Image
+            The current drawing as a PIL Image. If no drawing exists and store_background
+            is True, returns a white image. If store_background is False, returns a
+            transparent image.
+        """
+        from PIL import Image
         
         # If base64 is empty, return an empty image with the correct dimensions
         if not self.base64:
@@ -195,52 +204,19 @@ class Paint(anywidget.AnyWidget):
                 img = create_empty_image(width=self.width, height=self.height, background_color=(255, 255, 255, 255))
             else:
                 # Return transparent background
-                img = create_empty_image(width=self.width, height=self.height, background_color=(255, 255, 255, 0))
+                img = create_empty_image(width=self.width, height=self.height, background_color=(0, 0, 0, 0))
         else:
             # Get the original image
             img = base64_to_pil(self.base64)
             
-            # If store_background is True, add a white background
-            if self.store_background:
-                # Create a new image with white background
+            # If store_background is True and the image has transparency,
+            # composite it onto a white background
+            if self.store_background and 'A' in img.mode:
                 background = Image.new('RGBA', img.size, (255, 255, 255, 255))
-                # Paste the original image onto the white background
-                if img.mode == 'RGBA':
-                    # Use alpha channel as mask for RGBA images
-                    background.paste(img, (0, 0), img)
-                else:
-                    # No mask needed for RGB images
-                    background.paste(img, (0, 0))
-                img = background
-        
-        # Add grid if keep_grid is True
-        if self.keep_grid and self.show_grid:
-            img = self._add_grid_to_image(img)
+                img = Image.alpha_composite(background, img)
         
         return img
     
-    def _add_grid_to_image(self, img):
-        """Add grid lines to the image."""
-        from PIL import Image, ImageDraw
-        
-        # Create a copy to avoid modifying the original
-        img_with_grid = img.copy()
-        draw = ImageDraw.Draw(img_with_grid)
-        
-        # Grid parameters (can be made configurable later with grid_size parameter)
-        grid_size = 20
-        grid_color = (200, 200, 200, 128)  # Light gray with some transparency
-        
-        # Draw vertical lines
-        for x in range(grid_size, img.width, grid_size):
-            draw.line([(x, 0), (x, img.height)], fill=grid_color, width=1)
-        
-        # Draw horizontal lines  
-        for y in range(grid_size, img.height, grid_size):
-            draw.line([(0, y), (img.width, y)], fill=grid_color, width=1)
-        
-        return img_with_grid
-
     def get_base64(self) -> str:
         # Return empty string if no image has been drawn
         if not self.base64:

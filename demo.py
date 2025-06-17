@@ -18,13 +18,21 @@ app = marimo.App(width="medium")
 def _():
     import marimo as mo
     from mopaint import Paint
-    from mohtml import img
-    return Paint, img, mo
+    from mohtml import img, div, tailwind_css
+
+    tailwind_css()
+    return Paint, div, img, mo, tailwind_css
 
 
 @app.cell
 def _(Paint, mo):
-    widget = mo.ui.anywidget(Paint(height=450, store_background=True))
+    widget = mo.ui.anywidget(
+        Paint(
+            height=450,
+            store_background=False,
+            show_grid=True,
+        )
+    )
     return (widget,)
 
 
@@ -35,8 +43,16 @@ def _(widget):
 
 
 @app.cell
-def _(img, widget):
-    img(src=widget.get_base64())  # Use base64 representation directly with mohtml
+def _(widget):
+    widget.value
+    return
+
+
+@app.cell
+def _(div, img, widget):
+    div(
+        img(src=widget.get_base64()), klass="bg-gray-200 p-4"
+    )  # Use base64 representation directly with mohtml
     return
 
 
