@@ -26,6 +26,34 @@ def test_init_with_pil_image():
     assert result_img.getpixel((599, 399))[:3] == (255, 255, 255)
 
 
+def test_user_api_example():
+    """Test the exact API example from the user's request to ensure no errors occur"""
+    # Create a test image file (simulating opening a PNG)
+    img_ = Image.new('RGB', (300, 200), color='blue')
+    
+    # Test the exact API call from the user's example
+    try:
+        widget = Paint(width=1000, height=1000, initial_image=img_)
+        
+        # Verify the widget was created successfully
+        assert widget is not None
+        assert widget.width == 1000
+        assert widget.height == 1000
+        assert widget.base64 != ""
+        
+        # Verify we can get the image back
+        result_img = widget.get_pil()
+        assert result_img is not None
+        assert result_img.size == (1000, 1000)
+        
+        # Verify we can get base64
+        base64_result = widget.get_base64()
+        assert base64_result != ""
+        
+    except Exception as e:
+        pytest.fail(f"User API example should not raise any exceptions, but got: {e}")
+
+
 def test_init_with_base64_string():
     """Test initializing Paint widget with a base64 string"""
     # Create a test image and convert to base64

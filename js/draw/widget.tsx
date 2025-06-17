@@ -42,6 +42,34 @@ function Component() {
   
 
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [initialImageLoaded, setInitialImageLoaded] = useState(false);
+
+  // Load initial image when base64 changes
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !base64) return;
+
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    const img = new Image();
+    img.onload = () => {
+      // Clear canvas and draw the initial image
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(img, 0, 0, canvas.width, canvas.height);
+      setInitialImageLoaded(true);
+    };
+    img.onerror = () => {
+      console.error('Failed to load initial image');
+      // Fall back to white background
+      context.fillStyle = '#FFFFFF';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      setInitialImageLoaded(true);
+    };
+    img.src = base64;
+  }, [base64, canvasSize]);
 
   useEffect(() => {
     const resizeCanvas = () => {
@@ -56,15 +84,20 @@ function Component() {
         canvas.width = newWidth;
         canvas.height = newHeight;
         
-        // Reset the canvas to an empty state with white background
         const context = canvas.getContext('2d');
         if (context) {
-          context.fillStyle = '#FFFFFF';
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          
-          // Update the base64 representation to reflect the empty state
-          const emptyBase64 = canvas.toDataURL('image/png');
-          setBase64(emptyBase64);
+          if (base64) {
+            // If there's an initial image, it will be loaded by the base64 useEffect
+            setInitialImageLoaded(false);
+          } else {
+            // No initial image, start with white background
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Update the base64 representation to reflect the empty state
+            const emptyBase64 = canvas.toDataURL('image/png');
+            setBase64(emptyBase64);
+          }
         }
       }
     };
