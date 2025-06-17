@@ -53,10 +53,6 @@ class Paint(anywidget.AnyWidget):
     store_background : bool, optional
         Whether to include a white background when exporting the image. 
         If False, the background will be transparent. Default is True.
-    initial_image : PIL.Image.Image, optional
-        Initial image to load into the canvas. Must be a PIL Image object.
-        If provided, it will be resized to fit the canvas dimensions if necessary.
-        Default is None (empty canvas).
     show_grid : bool, optional
         Whether to show a grid overlay on the canvas. Default is False.
     store_grid : bool, optional
@@ -66,18 +62,12 @@ class Paint(anywidget.AnyWidget):
     Examples
     --------
     >>> from mopaint import Paint
-    >>> from PIL import Image
-    >>> 
     >>> # Create widget with empty canvas
     >>> widget = Paint(height=400, width=600)
     >>> widget  # Display the widget
     >>> 
     >>> # Create widget with grid
     >>> widget = Paint(height=400, width=600, show_grid=True)
-    >>> 
-    >>> # Create widget with initial image
-    >>> img = Image.open('background.png')
-    >>> widget = Paint(height=400, width=600, initial_image=img)
     >>> 
     >>> # Get the drawing as PIL Image
     >>> img = widget.get_pil()
@@ -94,7 +84,7 @@ class Paint(anywidget.AnyWidget):
     show_grid = traitlets.Bool(False).tag(sync=True)
     store_grid = traitlets.Bool(False).tag(sync=True)
     
-    def __init__(self, height=500, width=889, store_background=True, initial_image=None, show_grid=False, store_grid=False):
+    def __init__(self, height=500, width=889, store_background=True, show_grid=False, store_grid=False):
         """Initialize the Paint widget.
         
         Parameters
@@ -106,10 +96,6 @@ class Paint(anywidget.AnyWidget):
         store_background : bool, optional
             Whether to include a white background when exporting the image. 
             If False, the background will be transparent. Default is True.
-        initial_image : PIL.Image.Image or str, optional
-            Initial image to load into the canvas. Can be either a PIL Image object
-            or a base64 encoded string. If a PIL Image is provided, it will be resized
-            to fit the canvas dimensions if necessary. Default is None (empty canvas).
         show_grid : bool, optional
             Whether to show a grid overlay on the canvas. Default is False.
         store_grid : bool, optional
@@ -127,51 +113,7 @@ class Paint(anywidget.AnyWidget):
         self.store_background = store_background
         self.show_grid = show_grid
         self.store_grid = store_grid
-        
-        # Handle initial image
-        if initial_image is None:
-            self.base64 = ""
-        elif isinstance(initial_image, str):
-            # Assume it's already a base64 string
-            self.base64 = initial_image
-        else:
-            # Assume it's a PIL Image
-            from PIL import Image
-            
-            # Resize image to fit canvas if necessary
-            if initial_image.size != (width, height):
-                # Create a new image with the canvas size and white background
-                canvas = Image.new('RGBA', (width, height), (255, 255, 255, 255))
-                
-                # Calculate scaling to fit image within canvas while maintaining aspect ratio
-                img_ratio = initial_image.width / initial_image.height
-                canvas_ratio = width / height
-                
-                if img_ratio > canvas_ratio:
-                    # Image is wider, scale by width
-                    new_width = width
-                    new_height = int(width / img_ratio)
-                else:
-                    # Image is taller, scale by height
-                    new_height = height
-                    new_width = int(height * img_ratio)
-                
-                # Resize the image
-                resized = initial_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                
-                # Paste the resized image centered on the canvas
-                x = (width - new_width) // 2
-                y = (height - new_height) // 2
-                
-                # Handle images with alpha channel
-                if resized.mode == 'RGBA':
-                    canvas.paste(resized, (x, y), resized)
-                else:
-                    canvas.paste(resized, (x, y))
-                
-                self.base64 = pil_to_base64(canvas)
-            else:
-                self.base64 = pil_to_base64(initial_image)
+        self.base64 = ""
     
     @traitlets.observe('store_grid', 'show_grid')
     def _validate_grid_params(self, change):

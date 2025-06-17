@@ -56,10 +56,5 @@ def _(widget):
     return
 
 
-@app.cell
-def _():
-    return
-
-
 if __name__ == "__main__":
     app.run()
