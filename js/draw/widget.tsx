@@ -39,9 +39,40 @@ function Component() {
   const [dragging, setDragging] = useState(false);
   let [base64, setBase64] = useModelState<string>("base64");
   let [height, setHeight] = useModelState<number>("height");
+  let [showGrid, setShowGrid] = useModelState<boolean>("show_grid");
+  let [keepGrid, setKeepGrid] = useModelState<boolean>("keep_grid");
   
 
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+
+  // Grid rendering function
+  const drawGrid = (context: CanvasRenderingContext2D, width: number, height: number) => {
+    if (!showGrid) return;
+    
+    const gridSize = 20;
+    context.save();
+    context.strokeStyle = 'rgba(200, 200, 200, 0.5)';
+    context.lineWidth = 1;
+    context.setLineDash([]);
+    
+    // Draw vertical lines
+    for (let x = gridSize; x < width; x += gridSize) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, height);
+      context.stroke();
+    }
+    
+    // Draw horizontal lines  
+    for (let y = gridSize; y < height; y += gridSize) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(width, y);
+      context.stroke();
+    }
+    
+    context.restore();
+  };
 
   useEffect(() => {
     const resizeCanvas = () => {
@@ -62,6 +93,9 @@ function Component() {
           context.fillStyle = '#FFFFFF';
           context.fillRect(0, 0, canvas.width, canvas.height);
           
+          // Draw grid if enabled
+          drawGrid(context, canvas.width, canvas.height);
+          
           // Update the base64 representation to reflect the empty state
           const emptyBase64 = canvas.toDataURL('image/png');
           setBase64(emptyBase64);
@@ -79,7 +113,28 @@ function Component() {
     resizeCanvas();
 
     return () => resizeObserver.disconnect();
-  }, []);
+  }, [showGrid]);
+
+  // Effect to redraw grid when showGrid changes
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const context = canvas.getContext('2d');
+      if (context) {
+        // Clear and redraw background
+        context.fillStyle = '#FFFFFF';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw grid if enabled
+        drawGrid(context, canvas.width, canvas.height);
+        
+        // Update base64 if no content was drawn yet
+        if (!base64) {
+          setBase64(canvas.toDataURL('image/png'));
+        }
+      }
+    }
+  }, [showGrid]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -118,7 +173,37 @@ function Component() {
     setIsDrawing(false);
     const canvas = canvasRef.current;
     if (canvas) {
-      base64 = canvas.toDataURL('image/png');
+      const context = canvas.getContext('2d');
+      if (context && !keepGrid && showGrid) {
+        // If we're showing grid but not keeping it, we need to create a version without grid
+        // Create a temporary canvas to capture just the drawing without grid
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width;
+        tempCanvas.height = canvas.height;
+        const tempContext = tempCanvas.getContext('2d');
+        
+        if (tempContext) {
+          // Copy the current canvas
+          tempContext.drawImage(canvas, 0, 0);
+          
+          // Clear the original canvas and redraw without grid
+          context.fillStyle = '#FFFFFF';
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          
+          // Draw the content back (this removes the grid)
+          tempContext.globalCompositeOperation = 'source-over';
+          context.drawImage(tempCanvas, 0, 0);
+          
+          // Save the base64 without grid
+          base64 = canvas.toDataURL('image/png');
+          
+          // Now redraw with grid for display
+          drawGrid(context, canvas.width, canvas.height);
+        }
+      } else {
+        // Either not showing grid, or keeping grid - save as is
+        base64 = canvas.toDataURL('image/png');
+      }
     }
     setBase64(base64 as string);
   };
@@ -219,6 +304,49 @@ function Component() {
             <div className="w-7 h-0.5 bg-gray-400 my-1"></div>
             <Button
               variant="ghost"
+              className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${showGrid ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
+              onClick={() => {
+                const newShowGrid = !showGrid;
+                setShowGrid(newShowGrid);
+                // If turning off grid, also turn off keep_grid
+                if (!newShowGrid && keepGrid) {
+                  setKeepGrid(false);
+                }
+              }}
+              title="Show Grid"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
+                <rect x="3" y="3" width="18" height="18" />
+                <path d="M9 3v18" />
+                <path d="M15 3v18" />
+                <path d="M3 9h18" />
+                <path d="M3 15h18" />
+              </svg>
+            </Button>
+            <Button
+              variant="ghost"
+              className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${keepGrid ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''} ${!showGrid ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => {
+                if (showGrid) {
+                  setKeepGrid(!keepGrid);
+                }
+              }}
+              disabled={!showGrid}
+              title={showGrid ? "Keep Grid in Output" : "Enable 'Show Grid' first"}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-black">
+                <rect x="3" y="3" width="18" height="18" />
+                <path d="M9 3v18" />
+                <path d="M15 3v18" />
+                <path d="M3 9h18" />
+                <path d="M3 15h18" />
+                <path d="M12 8l-4 4 4 4" />
+                <path d="m8 12 4 0" />
+              </svg>
+            </Button>
+            <div className="w-7 h-0.5 bg-gray-400 my-1"></div>
+            <Button
+              variant="ghost"
               className="w-7 h-7 p-0 min-w-0 mb-0.5"
               onClick={() => {
                 const canvas = canvasRef.current;
@@ -227,6 +355,10 @@ function Component() {
                   if (context) {
                     context.fillStyle = '#FFFFFF';
                     context.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Redraw grid if enabled
+                    drawGrid(context, canvas.width, canvas.height);
+                    
                     setBase64(canvas.toDataURL('image/png'));
                   }
                 }
