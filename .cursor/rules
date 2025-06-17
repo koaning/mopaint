@@ -1,0 +1,1 @@
+This project contains a AnyWidget. The MoPaint folder contains all the Python code, but you will also notice that there is a JS folder. This JS folder contains TypeScript, and there is a build step that you can find in the make file that moves compiled code into the Mopaint directory such that Python can use it via any widget. 
