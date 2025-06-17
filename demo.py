@@ -26,13 +26,7 @@ def _():
 
 @app.cell
 def _(Paint, mo):
-    widget = mo.ui.anywidget(
-        Paint(
-            height=550,
-            store_background=False,
-            show_grid=True,
-        )
-    )
+    widget = mo.ui.anywidget(Paint(height=550))
     return (widget,)
 
 
