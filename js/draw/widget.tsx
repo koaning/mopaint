@@ -185,21 +185,6 @@ function Component() {
     };
   }, []);
 
-  // Effect to handle initial canvas setup
-  useEffect(() => {
-    const { drawingContext } = getContexts();
-    if (!drawingContext || !drawingCanvasRef.current) return;
-
-    // Clear the canvas
-    drawingContext.clearRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height);
-
-    // If storeBackground is true, fill with white
-    if (storeBackground) {
-      drawingContext.fillStyle = '#FFFFFF';
-      drawingContext.fillRect(0, 0, drawingCanvasRef.current.width, drawingCanvasRef.current.height);
-    }
-  }, []);  // Only run once on mount
-
   // Effect to handle grid display
   useEffect(() => {
     const { gridContext } = getContexts();
@@ -223,22 +208,23 @@ function Component() {
     const exportContext = exportCanvas.getContext('2d', { alpha: true });
     if (!exportContext) return;
 
-    // Clear with transparency first
+    // Start fresh with a transparent canvas
     exportContext.clearRect(0, 0, exportCanvas.width, exportCanvas.height);
     
-    // Fill with white if background is enabled
+    // Layer 1: Background (if enabled)
     if (storeBackground) {
       exportContext.fillStyle = '#FFFFFF';
       exportContext.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
     }
     
-    // Draw grid first if needed
+    // Layer 2: Drawing content (always preserve original alpha)
+    exportContext.globalCompositeOperation = 'source-over';
+    exportContext.drawImage(drawingCanvasRef.current, 0, 0);
+    
+    // Layer 3: Grid (if enabled)
     if (storeGrid && showGrid) {
       drawGridOnContext(exportContext, exportCanvas.width, exportCanvas.height, true);
     }
-    
-    // Draw the actual drawing content
-    exportContext.drawImage(drawingCanvasRef.current, 0, 0);
     
     // Update base64 output
     try {
@@ -248,7 +234,7 @@ function Component() {
       console.error('Failed to export canvas:', e);
       setError('Failed to export canvas. Try refreshing the page.');
     }
-  }, [storeGrid, storeBackground, canvasSize, base64]);
+  }, [storeGrid, storeBackground, showGrid, base64, canvasSize]);
 
   // Drawing functions with coordinate handling
   const startDrawingAt = (x: number, y: number) => {
@@ -312,16 +298,10 @@ function Component() {
   const stopDrawing = () => {
     if (!isDrawing) return;
     
-    const { drawingContext } = getContexts();
-    if (!drawingContext) return;
-
     try {
-      drawingContext.stroke();
       // Force a re-export by creating a new base64 string
       const canvas = drawingCanvasRef.current;
       if (canvas) {
-        // We don't use the direct canvas.toDataURL here because we want
-        // to trigger the export effect which handles background and grid
         setBase64('');  // This will trigger the export effect
       }
     } catch (e) {
@@ -501,7 +481,7 @@ function Component() {
               variant="ghost"
               className="w-7 h-7 p-0 min-w-0 mb-0.5"
               onClick={() => {
-                // Clear the drawing canvas
+                // Clear drawing canvas
                 const drawingCanvas = drawingCanvasRef.current;
                 if (drawingCanvas) {
                   const drawingContext = drawingCanvas.getContext('2d');
@@ -509,14 +489,9 @@ function Component() {
                     drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
                   }
                 }
-                // Redraw the grid on the grid canvas
-                const gridCanvas = gridCanvasRef.current;
-                if (gridCanvas) {
-                  const gridContext = gridCanvas.getContext('2d');
-                  if (gridContext) {
-                    drawGridOnContext(gridContext, gridCanvas.width, gridCanvas.height, showGrid);
-                  }
-                }
+                
+                // Trigger base64 update - this will handle background and grid
+                setBase64('');
               }}
               title="Clear Canvas"
             >
