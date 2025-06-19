@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mopaint"
-version = "0.2.0"
+version = "0.2.1"
 description = "Paint for marimo"
 authors = [{name = "Vincent D. Warmerdam"}]
 readme = "README.md"
