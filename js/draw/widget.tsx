@@ -49,6 +49,12 @@ function Component() {
   let [storeGrid, setStoreGrid] = useModelState<boolean>("store_grid");
   let [storeBackground, setStoreBackground] = useModelState<boolean>("store_background");
   
+  console.log('[Component Render] base64 state:', {
+    hasBase64: !!base64,
+    length: base64?.length,
+    preview: base64?.substring(0, 50)
+  });
+  
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   // Utility function to ensure canvas context is available
@@ -188,19 +194,114 @@ function Component() {
   // Effect to handle grid display
   useEffect(() => {
     const { gridContext } = getContexts();
-    if (gridContext && gridCanvasRef.current) {
-      // Clear the grid canvas first
-      gridContext.clearRect(0, 0, gridCanvasRef.current.width, gridCanvasRef.current.height);
-      // Draw grid if needed
-      if (showGrid) {
-        drawGridOnContext(gridContext, gridCanvasRef.current.width, gridCanvasRef.current.height, true);
-      }
+    if (!gridContext || !gridCanvasRef.current) return;
+    
+    const canvas = gridCanvasRef.current;
+    // Only proceed if canvas has proper dimensions
+    if (canvas.width === 0 || canvas.height === 0) return;
+    
+    // Clear the grid canvas first
+    gridContext.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw grid if needed
+    if (showGrid) {
+      drawGridOnContext(gridContext, canvas.width, canvas.height, true);
     }
   }, [showGrid, canvasSize]);
+
+  // Track the last loaded base64 to detect changes
+  const lastLoadedBase64Ref = useRef<string>("");
+  // Track if we're in the process of loading an initial image
+  const isLoadingInitialImageRef = useRef(false);
+  // Track drawing changes to trigger exports
+  const [exportTrigger, setExportTrigger] = useState(0);
+
+  // Effect to load initial image when base64 is available and canvas is ready
+  useEffect(() => {
+    console.log('[Image Load Effect] Running...', {
+      hasBase64: !!base64,
+      base64Length: base64?.length,
+      base64Preview: base64?.substring(0, 50),
+      lastLoadedPreview: lastLoadedBase64Ref.current?.substring(0, 50),
+      isSameAsLast: base64 === lastLoadedBase64Ref.current,
+      canvasWidth: drawingCanvasRef.current?.width,
+      canvasHeight: drawingCanvasRef.current?.height,
+      hasDrawingContext: !!getContexts().drawingContext
+    });
+    
+    const { drawingContext } = getContexts();
+    
+    // Skip if no context, canvas, or base64
+    if (!drawingContext || !drawingCanvasRef.current || !base64) {
+      console.log('[Image Load Effect] Early return - missing requirements:', {
+        noContext: !drawingContext,
+        noCanvas: !drawingCanvasRef.current,
+        noBase64: !base64
+      });
+      return;
+    }
+    
+    // Skip if we already loaded this exact base64, BUT only if canvas still has content
+    if (base64 === lastLoadedBase64Ref.current) {
+      // Check if canvas actually has the image content
+      const canvas = drawingCanvasRef.current;
+      if (canvas && canvas.width > 0 && canvas.height > 0) {
+        try {
+          const imageData = drawingContext.getImageData(0, 0, canvas.width, canvas.height);
+          const hasContent = imageData.data.some(pixel => pixel !== 0);
+          if (hasContent) {
+            console.log('[Image Load Effect] Already loaded this image and canvas has content, skipping');
+            return;
+          } else {
+            console.log('[Image Load Effect] Same base64 but canvas is empty, reloading...');
+          }
+        } catch (e) {
+          console.log('[Image Load Effect] Could not check canvas content, reloading just in case...');
+        }
+      }
+    }
+    
+    const canvas = drawingCanvasRef.current;
+    // Only proceed if canvas has proper dimensions
+    if (canvas.width === 0 || canvas.height === 0) {
+      console.log('[Image Load Effect] Canvas not ready:', canvas.width, canvas.height);
+      return;
+    }
+    
+    console.log('[Image Load Effect] Loading new image...');
+    isLoadingInitialImageRef.current = true;
+    // Load the initial image
+    const img = new Image();
+    img.onload = () => {
+      console.log('[Image Load Effect] Image loaded successfully, drawing to canvas');
+      drawingContext.clearRect(0, 0, canvas.width, canvas.height);
+      drawingContext.drawImage(img, 0, 0, canvas.width, canvas.height);
+      lastLoadedBase64Ref.current = base64;
+      isLoadingInitialImageRef.current = false;
+      console.log('[Image Load Effect] Image drawn to canvas');
+    };
+    img.onerror = (e) => {
+      console.error('[Image Load Effect] Failed to load image:', e);
+      isLoadingInitialImageRef.current = false;
+    };
+    img.src = `data:image/png;base64,${base64}`;
+    console.log('[Image Load Effect] Image src set');
+  }, [base64, canvasSize.width, canvasSize.height]);
 
   // Effect to handle export updates
   useEffect(() => {
     if (!drawingCanvasRef.current) return;
+    
+    // Don't export on initial render (when exportTrigger is 0)
+    if (exportTrigger === 0) {
+      console.log('[Export Effect] Skipping initial render');
+      return;
+    }
+    
+    // Don't export while we're loading an initial image
+    if (isLoadingInitialImageRef.current) {
+      console.log('[Export Effect] Skipping - loading initial image');
+      return;
+    }
     
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = drawingCanvasRef.current.width;
@@ -234,7 +335,7 @@ function Component() {
       console.error('Failed to export canvas:', e);
       setError('Failed to export canvas. Try refreshing the page.');
     }
-  }, [storeGrid, storeBackground, showGrid, base64, canvasSize]);
+  }, [storeGrid, storeBackground, showGrid, canvasSize, exportTrigger]);
 
   // Drawing functions with coordinate handling
   const startDrawingAt = (x: number, y: number) => {
@@ -299,11 +400,8 @@ function Component() {
     if (!isDrawing) return;
     
     try {
-      // Force a re-export by creating a new base64 string
-      const canvas = drawingCanvasRef.current;
-      if (canvas) {
-        setBase64('');  // This will trigger the export effect
-      }
+      // Trigger export after drawing
+      setExportTrigger(prev => prev + 1);
     } catch (e) {
       console.error('Failed to complete drawing:', e);
       setError('Failed to complete drawing. Try refreshing the page.');
@@ -490,8 +588,8 @@ function Component() {
                   }
                 }
                 
-                // Trigger base64 update - this will handle background and grid
-                setBase64('');
+                // Trigger export - this will handle background and grid
+                setExportTrigger(prev => prev + 1);
               }}
               title="Clear Canvas"
             >
