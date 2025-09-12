@@ -49,12 +49,6 @@ function Component() {
   let [storeGrid, setStoreGrid] = useModelState<boolean>("store_grid");
   let [storeBackground, setStoreBackground] = useModelState<boolean>("store_background");
   
-  console.log('[Component Render] base64 state:', {
-    hasBase64: !!base64,
-    length: base64?.length,
-    preview: base64?.substring(0, 50)
-  });
-  
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   // Utility function to ensure canvas context is available
@@ -134,11 +128,34 @@ function Component() {
       const container = drawingCanvasRef.current?.parentElement;
       if (!container) return;
 
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
+      let newWidth = container.clientWidth;
+      let newHeight = container.clientHeight;
       
-      if (syncCanvasSizes(newWidth, newHeight)) {
-        setCanvasSize({ width: newWidth, height: newHeight });
+      // If we have an original image, use its dimensions to maintain aspect ratio
+      // and prevent scaling distortion
+      if (originalImageRef.current) {
+        // For images, we want to maintain the original dimensions
+        // Width can be responsive to container, but height should match image proportions
+        const img = new Image();
+        img.onload = () => {
+          const imageAspectRatio = img.width / img.height;
+          const containerAspectRatio = newWidth / newHeight;
+          
+          // Preserve original image dimensions - don't scale the image
+          // Instead, adjust canvas to accommodate the image
+          newWidth = Math.min(newWidth, img.width);
+          newHeight = img.height;
+          
+          if (syncCanvasSizes(newWidth, newHeight)) {
+            setCanvasSize({ width: newWidth, height: newHeight });
+          }
+        };
+        img.src = `data:image/png;base64,${originalImageRef.current}`;
+      } else {
+        // No original image, use container dimensions as before
+        if (syncCanvasSizes(newWidth, newHeight)) {
+          setCanvasSize({ width: newWidth, height: newHeight });
+        }
       }
     };
 
@@ -154,7 +171,7 @@ function Component() {
       window.removeEventListener('resize', debouncedResize);
       clearTimeout(resizeTimeout);
     };
-  }, []); // No dependency on showGrid anymore
+  }, []); // Empty dependency - resize logic handles original image internally
 
   // Effect to handle touch events
   useEffect(() => {
@@ -212,31 +229,80 @@ function Component() {
   const lastLoadedBase64Ref = useRef<string>("");
   // Track if we're in the process of loading an initial image
   const isLoadingInitialImageRef = useRef(false);
+  // Store the original base64 image for reset operations
+  const originalImageRef = useRef<string>("");
   // Track drawing changes to trigger exports
   const [exportTrigger, setExportTrigger] = useState(0);
 
+  // Drawing functions - defined before effects that use them
+  const startDrawingAt = (x: number, y: number) => {
+    const { drawingContext } = getContexts();
+    if (!drawingContext) return;
+
+    try {
+      drawingContext.beginPath();
+      drawingContext.moveTo(x, y);
+      setIsDrawing(true);
+    } catch (e) {
+      console.error('Failed to start drawing:', e);
+      setError('Failed to start drawing. Try refreshing the page.');
+    }
+  };
+
+  const drawAt = (x: number, y: number) => {
+    if (!isDrawing) return;
+    
+    const { drawingContext } = getContexts();
+    if (!drawingContext) return;
+
+    try {
+      drawingContext.lineTo(x, y);
+      
+      if (tool === 'eraser') {
+        // Save the current state
+        drawingContext.save();
+        // Set composite operation to clear the pixels
+        drawingContext.globalCompositeOperation = 'destination-out';
+        drawingContext.strokeStyle = '#000000';  // Color doesn't matter for eraser
+        drawingContext.lineWidth = 20;
+        drawingContext.lineCap = 'round';
+        drawingContext.stroke();
+        // Restore the previous state
+        drawingContext.restore();
+      } else {
+        // Normal drawing
+        drawingContext.strokeStyle = color;
+        drawingContext.lineWidth = tool === 'marker' ? 8 : 2;
+        drawingContext.lineCap = 'round';
+        drawingContext.stroke();
+      }
+    } catch (e) {
+      console.error('Failed to draw:', e);
+      setError('Failed to draw. Try refreshing the page.');
+      setIsDrawing(false);
+    }
+  };
+
+  const stopDrawing = () => {
+    if (!isDrawing) return;
+    
+    try {
+      // Trigger export after drawing
+      setExportTrigger(prev => prev + 1);
+    } catch (e) {
+      console.error('Failed to complete drawing:', e);
+      setError('Failed to complete drawing. Try refreshing the page.');
+    }
+    
+    setIsDrawing(false);
+  };
+
   // Effect to load initial image when base64 is available and canvas is ready
   useEffect(() => {
-    console.log('[Image Load Effect] Running...', {
-      hasBase64: !!base64,
-      base64Length: base64?.length,
-      base64Preview: base64?.substring(0, 50),
-      lastLoadedPreview: lastLoadedBase64Ref.current?.substring(0, 50),
-      isSameAsLast: base64 === lastLoadedBase64Ref.current,
-      canvasWidth: drawingCanvasRef.current?.width,
-      canvasHeight: drawingCanvasRef.current?.height,
-      hasDrawingContext: !!getContexts().drawingContext
-    });
-    
     const { drawingContext } = getContexts();
     
     // Skip if no context, canvas, or base64
     if (!drawingContext || !drawingCanvasRef.current || !base64) {
-      console.log('[Image Load Effect] Early return - missing requirements:', {
-        noContext: !drawingContext,
-        noCanvas: !drawingCanvasRef.current,
-        noBase64: !base64
-      });
       return;
     }
     
@@ -249,13 +315,10 @@ function Component() {
           const imageData = drawingContext.getImageData(0, 0, canvas.width, canvas.height);
           const hasContent = imageData.data.some(pixel => pixel !== 0);
           if (hasContent) {
-            console.log('[Image Load Effect] Already loaded this image and canvas has content, skipping');
             return;
-          } else {
-            console.log('[Image Load Effect] Same base64 but canvas is empty, reloading...');
           }
         } catch (e) {
-          console.log('[Image Load Effect] Could not check canvas content, reloading just in case...');
+          // Could not check canvas content, proceed with reload
         }
       }
     }
@@ -263,28 +326,32 @@ function Component() {
     const canvas = drawingCanvasRef.current;
     // Only proceed if canvas has proper dimensions
     if (canvas.width === 0 || canvas.height === 0) {
-      console.log('[Image Load Effect] Canvas not ready:', canvas.width, canvas.height);
       return;
     }
     
-    console.log('[Image Load Effect] Loading new image...');
     isLoadingInitialImageRef.current = true;
+    
+    // Store original image if this is the first time loading it
+    if (!originalImageRef.current && base64) {
+      originalImageRef.current = base64;
+    }
+    
     // Load the initial image
     const img = new Image();
     img.onload = () => {
-      console.log('[Image Load Effect] Image loaded successfully, drawing to canvas');
       drawingContext.clearRect(0, 0, canvas.width, canvas.height);
-      drawingContext.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+      // Draw image at original size (no scaling) - preserve image dimensions
+      drawingContext.drawImage(img, 0, 0, img.width, img.height);
+      
       lastLoadedBase64Ref.current = base64;
       isLoadingInitialImageRef.current = false;
-      console.log('[Image Load Effect] Image drawn to canvas');
     };
     img.onerror = (e) => {
-      console.error('[Image Load Effect] Failed to load image:', e);
+      console.error('Failed to load image:', e);
       isLoadingInitialImageRef.current = false;
     };
     img.src = `data:image/png;base64,${base64}`;
-    console.log('[Image Load Effect] Image src set');
   }, [base64, canvasSize.width, canvasSize.height]);
 
   // Effect to handle export updates
@@ -293,13 +360,11 @@ function Component() {
     
     // Don't export on initial render (when exportTrigger is 0)
     if (exportTrigger === 0) {
-      console.log('[Export Effect] Skipping initial render');
       return;
     }
     
     // Don't export while we're loading an initial image
     if (isLoadingInitialImageRef.current) {
-      console.log('[Export Effect] Skipping - loading initial image');
       return;
     }
     
@@ -579,17 +644,28 @@ function Component() {
               variant="ghost"
               className="w-7 h-7 p-0 min-w-0 mb-0.5"
               onClick={() => {
-                // Clear drawing canvas
                 const drawingCanvas = drawingCanvasRef.current;
                 if (drawingCanvas) {
                   const drawingContext = drawingCanvas.getContext('2d');
                   if (drawingContext) {
                     drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                    
+                    // If we have an original image, restore it
+                    if (originalImageRef.current) {
+                      const img = new Image();
+                      img.onload = () => {
+                        // Draw image at original size (no scaling)
+                        drawingContext.drawImage(img, 0, 0, img.width, img.height);
+                        // Trigger export after restoring
+                        setExportTrigger(prev => prev + 1);
+                      };
+                      img.src = `data:image/png;base64,${originalImageRef.current}`;
+                    } else {
+                      // No original image, just clear and trigger export
+                      setExportTrigger(prev => prev + 1);
+                    }
                   }
                 }
-                
-                // Trigger export - this will handle background and grid
-                setExportTrigger(prev => prev + 1);
               }}
               title="Clear Canvas"
             >

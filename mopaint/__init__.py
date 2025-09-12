@@ -195,8 +195,10 @@ class Paint(anywidget.AnyWidget):
         ----------
         height : int, optional
             Height of the drawing canvas in pixels. Default is 500.
+            Cannot be used together with init_image.
         width : int, optional
             Width of the drawing canvas in pixels. Default is 889 (16:9 aspect ratio).
+            Cannot be used together with init_image.
         store_background : bool, optional
             Whether to include a white background when exporting the image. 
             If False, the background will be transparent. Default is True.
@@ -206,41 +208,69 @@ class Paint(anywidget.AnyWidget):
             Whether to include the grid in the exported image. Requires show_grid=True.
             Default is False.
         init_image : str, Path, PIL.Image.Image, bytes, or None, optional
-            Initial image to load into the canvas. Can be:
+            Initial image to load into the canvas. When provided, canvas dimensions
+            are automatically set to match the image dimensions. Can be:
             - PIL Image object
             - File path (string or Path object)
             - URL (string starting with http:// or https://)
             - Base64 encoded string (with or without data URL prefix)
             - Raw image bytes
             - None (empty canvas). Default is None.
+        
+        Raises
+        ------
+        ValueError
+            If init_image is provided along with explicit width or height parameters.
         """
+        # Check for defaults to determine if user explicitly provided width/height
+        import inspect
+        frame = inspect.currentframe()
+        args, _, _, values = inspect.getargvalues(frame)
+        
+        # Get the signature to check which parameters were explicitly passed
+        sig = inspect.signature(self.__init__)
+        bound_args = sig.bind_partial(height, width, store_background, show_grid, store_grid, init_image)
+        
+        # Check if user provided explicit width or height when init_image is present
+        user_provided_width = width != 889  # Default width
+        user_provided_height = height != 500  # Default height
+        
+        if init_image is not None and (user_provided_width or user_provided_height):
+            raise ValueError(
+                "Cannot specify both init_image and explicit width/height parameters. "
+                "Canvas dimensions are automatically determined from the image dimensions. "
+                f"Received: width={width}, height={height}, init_image={type(init_image).__name__}"
+            )
+        
         # Validate grid parameters
         if store_grid and not show_grid:
             raise ValueError("store_grid cannot be True when show_grid is False. "
                            "To include the grid in the output, you must first make it visible with show_grid=True.")
         
         super().__init__()
-        self.height = height
-        self.width = width
+        
+        # Handle initial image and set dimensions
+        if init_image is not None:
+            pil_image = input_to_pil(init_image)
+            if pil_image is not None:
+                # Set canvas dimensions to match image dimensions
+                self.width = pil_image.width
+                self.height = pil_image.height
+                
+                base64_with_prefix = pil_to_base64(pil_image)
+                self.base64 = base64_with_prefix.split(',')[1]  # Remove data URL prefix
+            else:
+                self.width = width
+                self.height = height
+                self.base64 = ""
+        else:
+            self.width = width
+            self.height = height
+            self.base64 = ""
+        
         self.store_background = store_background
         self.show_grid = show_grid
         self.store_grid = store_grid
-        
-        # Handle initial image
-        if init_image is not None:
-            print(f"[Paint.__init__] Processing init_image: {type(init_image)}")
-            pil_image = input_to_pil(init_image)
-            if pil_image is not None:
-                print(f"[Paint.__init__] Converted to PIL Image: {pil_image.size}")
-                base64_with_prefix = pil_to_base64(pil_image)
-                self.base64 = base64_with_prefix.split(',')[1]  # Remove data URL prefix
-                print(f"[Paint.__init__] Base64 set, length: {len(self.base64)}, preview: {self.base64[:50]}")
-            else:
-                print(f"[Paint.__init__] Failed to convert init_image to PIL")
-                self.base64 = ""
-        else:
-            print(f"[Paint.__init__] No init_image provided")
-            self.base64 = ""
     
     @traitlets.observe('store_grid', 'show_grid')
     def _validate_grid_params(self, change):

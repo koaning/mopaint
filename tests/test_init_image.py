@@ -226,3 +226,99 @@ def test_paint_init_image_with_grid_parameters():
     
     reconstructed = widget.get_pil()
     assert reconstructed.size == img.size
+
+
+def test_paint_init_image_with_explicit_width_raises_error():
+    """Test that providing both init_image and explicit width raises ValueError."""
+    img = create_test_image(width=200, height=100)
+    
+    with pytest.raises(ValueError) as exc_info:
+        Paint(init_image=img, width=500)
+    
+    error_msg = str(exc_info.value)
+    assert "Cannot specify both init_image and explicit width/height parameters" in error_msg
+    assert "width=500" in error_msg
+
+
+def test_paint_init_image_with_explicit_height_raises_error():
+    """Test that providing both init_image and explicit height raises ValueError."""
+    img = create_test_image(width=200, height=100)
+    
+    with pytest.raises(ValueError) as exc_info:
+        Paint(init_image=img, height=300)
+    
+    error_msg = str(exc_info.value)
+    assert "Cannot specify both init_image and explicit width/height parameters" in error_msg
+    assert "height=300" in error_msg
+
+
+def test_paint_init_image_with_explicit_width_and_height_raises_error():
+    """Test that providing both init_image and explicit width/height raises ValueError."""
+    img = create_test_image(width=200, height=100)
+    
+    with pytest.raises(ValueError) as exc_info:
+        Paint(init_image=img, width=500, height=300)
+    
+    error_msg = str(exc_info.value)
+    assert "Cannot specify both init_image and explicit width/height parameters" in error_msg
+    assert "width=500" in error_msg
+    assert "height=300" in error_msg
+
+
+def test_paint_init_image_auto_sets_dimensions():
+    """Test that init_image automatically sets canvas dimensions to match image."""
+    img = create_test_image(width=300, height=200)
+    widget = Paint(init_image=img)
+    
+    # Canvas dimensions should match image dimensions
+    assert widget.width == 300
+    assert widget.height == 200
+    
+    # Base64 should be set
+    assert widget.base64 != ""
+    
+    # get_pil should return image with correct dimensions
+    reconstructed = widget.get_pil()
+    assert reconstructed.size == (300, 200)
+
+
+def test_paint_init_image_with_defaults_works():
+    """Test that init_image works with default width/height (no explicit values)."""
+    img = create_test_image(width=150, height=75)
+    
+    # This should work fine - no explicit width/height provided
+    widget = Paint(init_image=img)
+    
+    # Dimensions should match image, not defaults
+    assert widget.width == 150
+    assert widget.height == 75
+    assert widget.base64 != ""
+
+
+def test_paint_without_init_image_uses_provided_dimensions():
+    """Test that without init_image, explicit width/height are used normally."""
+    widget = Paint(width=400, height=300)
+    
+    assert widget.width == 400
+    assert widget.height == 300
+    assert widget.base64 == ""  # No image loaded
+
+
+def test_paint_with_exact_size_image():
+    """Test that canvas dimensions exactly match image dimensions with no scaling."""
+    # Create a specific size image
+    test_width, test_height = 123, 456
+    img = create_test_image(width=test_width, height=test_height)
+    
+    widget = Paint(init_image=img)
+    
+    # Verify exact dimension matching
+    assert widget.width == test_width
+    assert widget.height == test_height
+    
+    # Verify image is loaded
+    assert widget.base64 != ""
+    
+    # Verify reconstructed image has exact same dimensions
+    reconstructed = widget.get_pil()
+    assert reconstructed.size == (test_width, test_height)
