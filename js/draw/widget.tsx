@@ -402,55 +402,6 @@ function Component() {
     }
   }, [storeGrid, storeBackground, showGrid, canvasSize, exportTrigger]);
 
-  // Drawing functions with coordinate handling
-  const startDrawingAt = (x: number, y: number) => {
-    const { drawingContext } = getContexts();
-    if (!drawingContext) return;
-
-    try {
-      drawingContext.beginPath();
-      drawingContext.moveTo(x, y);
-      setIsDrawing(true);
-    } catch (e) {
-      console.error('Failed to start drawing:', e);
-      setError('Failed to start drawing. Try refreshing the page.');
-    }
-  };
-
-  const drawAt = (x: number, y: number) => {
-    if (!isDrawing) return;
-    
-    const { drawingContext } = getContexts();
-    if (!drawingContext) return;
-
-    try {
-      drawingContext.lineTo(x, y);
-      
-      if (tool === 'eraser') {
-        // Save the current state
-        drawingContext.save();
-        // Set composite operation to clear the pixels
-        drawingContext.globalCompositeOperation = 'destination-out';
-        drawingContext.strokeStyle = '#000000';  // Color doesn't matter for eraser
-        drawingContext.lineWidth = 20;
-        drawingContext.lineCap = 'round';
-        drawingContext.stroke();
-        // Restore the previous state
-        drawingContext.restore();
-      } else {
-        // Normal drawing
-        drawingContext.strokeStyle = color;
-        drawingContext.lineWidth = tool === 'marker' ? 8 : 2;
-        drawingContext.lineCap = 'round';
-        drawingContext.stroke();
-      }
-    } catch (e) {
-      console.error('Failed to draw:', e);
-      setError('Failed to draw. Try refreshing the page.');
-      setIsDrawing(false);
-    }
-  };
-
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     startDrawingAt(e.clientX - rect.left, e.clientY - rect.top);
@@ -459,20 +410,6 @@ function Component() {
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     drawAt(e.clientX - rect.left, e.clientY - rect.top);
-  };
-
-  const stopDrawing = () => {
-    if (!isDrawing) return;
-    
-    try {
-      // Trigger export after drawing
-      setExportTrigger(prev => prev + 1);
-    } catch (e) {
-      console.error('Failed to complete drawing:', e);
-      setError('Failed to complete drawing. Try refreshing the page.');
-    }
-    
-    setIsDrawing(false);
   };
 
   const startDragging = (e: React.MouseEvent<HTMLDivElement>) => {

@@ -170,6 +170,10 @@ class Paint(anywidget.AnyWidget):
     >>> img = Image.open("image.png")
     >>> widget = Paint(init_image=img)
     >>> 
+    >>> # Create widget with large image scaled to fit height=400
+    >>> large_img = Image.open("large_image.png")  # e.g., 4000x2000
+    >>> widget = Paint(init_image=large_img, height=400)  # Canvas: 800x400
+    >>> 
     >>> # Create widget with initial base64 image
     >>> widget = Paint(init_image="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
     >>> 
@@ -195,10 +199,10 @@ class Paint(anywidget.AnyWidget):
         ----------
         height : int, optional
             Height of the drawing canvas in pixels. Default is 500.
-            Cannot be used together with init_image.
+            When used with init_image, scales the image to fit this height while preserving aspect ratio.
         width : int, optional
             Width of the drawing canvas in pixels. Default is 889 (16:9 aspect ratio).
-            Cannot be used together with init_image.
+            Cannot be used together with init_image (width is calculated from height and aspect ratio).
         store_background : bool, optional
             Whether to include a white background when exporting the image. 
             If False, the background will be transparent. Default is True.
@@ -209,7 +213,8 @@ class Paint(anywidget.AnyWidget):
             Default is False.
         init_image : str, Path, PIL.Image.Image, bytes, or None, optional
             Initial image to load into the canvas. When provided, canvas dimensions
-            are automatically set to match the image dimensions. Can be:
+            are automatically calculated based on the image aspect ratio. If height
+            is specified, the image is scaled to fit that height. Can be:
             - PIL Image object
             - File path (string or Path object)
             - URL (string starting with http:// or https://)
@@ -220,7 +225,7 @@ class Paint(anywidget.AnyWidget):
         Raises
         ------
         ValueError
-            If init_image is provided along with explicit width or height parameters.
+            If init_image is provided along with explicit width parameter.
         """
         # Check for defaults to determine if user explicitly provided width/height
         import inspect
@@ -231,15 +236,15 @@ class Paint(anywidget.AnyWidget):
         sig = inspect.signature(self.__init__)
         bound_args = sig.bind_partial(height, width, store_background, show_grid, store_grid, init_image)
         
-        # Check if user provided explicit width or height when init_image is present
+        # Check if user provided explicit width when init_image is present
         user_provided_width = width != 889  # Default width
         user_provided_height = height != 500  # Default height
         
-        if init_image is not None and (user_provided_width or user_provided_height):
+        if init_image is not None and user_provided_width:
             raise ValueError(
-                "Cannot specify both init_image and explicit width/height parameters. "
-                "Canvas dimensions are automatically determined from the image dimensions. "
-                f"Received: width={width}, height={height}, init_image={type(init_image).__name__}"
+                "Cannot specify both init_image and explicit width parameter. "
+                "Canvas width is automatically calculated from image aspect ratio and height. "
+                f"Received: width={width}, init_image={type(init_image).__name__}"
             )
         
         # Validate grid parameters
@@ -253,9 +258,18 @@ class Paint(anywidget.AnyWidget):
         if init_image is not None:
             pil_image = input_to_pil(init_image)
             if pil_image is not None:
-                # Set canvas dimensions to match image dimensions
-                self.width = pil_image.width
-                self.height = pil_image.height
+                # Calculate canvas dimensions based on image aspect ratio
+                image_width, image_height = pil_image.size
+                aspect_ratio = image_width / image_height
+                
+                if user_provided_height:
+                    # User specified height, calculate width from aspect ratio
+                    self.height = height
+                    self.width = int(height * aspect_ratio)
+                else:
+                    # No height specified, use original image dimensions
+                    self.width = image_width
+                    self.height = image_height
                 
                 base64_with_prefix = pil_to_base64(pil_image)
                 self.base64 = base64_with_prefix.split(',')[1]  # Remove data URL prefix

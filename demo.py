@@ -27,7 +27,7 @@ def _():
 @app.cell
 def _(Paint, mo):
     widget = mo.ui.anywidget(
-        Paint(init_image="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/025.png")
+        Paint(init_image="https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/025.png", height=700)
     )
     return (widget,)
 
@@ -70,7 +70,7 @@ def _(Paint, mo):
     draw.text((20, 60), "Initial Image", fill=(0, 0, 0, 255))
 
     # Create widget with initial image
-    widget_with_init = mo.ui.anywidget(Paint(height=300, init_image=test_img))
+    widget_with_init = mo.ui.anywidget(Paint(height=400, init_image=test_img))
     return (widget_with_init,)
 
 
@@ -90,13 +90,18 @@ def _(Paint, mo):
 
     # Demo: Create widget with base64 image (1x1 red pixel)
     red_pixel_base64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
-    widget_from_base64 = mo.ui.anywidget(Paint(height=200, init_image=red_pixel_base64))
+    widget_from_base64 = mo.ui.anywidget(Paint(init_image=red_pixel_base64, height=100))
     return (widget_from_base64,)
 
 
 @app.cell
 def _(widget_from_base64):
     widget_from_base64
+    return
+
+
+@app.cell
+def _():
     return
 
 

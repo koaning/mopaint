@@ -228,7 +228,7 @@ def test_paint_init_image_with_grid_parameters():
     assert reconstructed.size == img.size
 
 
-def test_paint_init_image_with_explicit_width_raises_error():
+def test_paint_init_image_with_explicit_width_only_raises_error():
     """Test that providing both init_image and explicit width raises ValueError."""
     img = create_test_image(width=200, height=100)
     
@@ -236,33 +236,32 @@ def test_paint_init_image_with_explicit_width_raises_error():
         Paint(init_image=img, width=500)
     
     error_msg = str(exc_info.value)
-    assert "Cannot specify both init_image and explicit width/height parameters" in error_msg
+    assert "Cannot specify both init_image and explicit width parameter" in error_msg
     assert "width=500" in error_msg
 
 
-def test_paint_init_image_with_explicit_height_raises_error():
-    """Test that providing both init_image and explicit height raises ValueError."""
-    img = create_test_image(width=200, height=100)
+def test_paint_init_image_with_explicit_height_works():
+    """Test that providing both init_image and explicit height works (scales image)."""
+    img = create_test_image(width=200, height=100)  # 2:1 aspect ratio
     
-    with pytest.raises(ValueError) as exc_info:
-        Paint(init_image=img, height=300)
+    # Should work and scale the image to fit height=300, width should be 600
+    widget = Paint(init_image=img, height=300)
     
-    error_msg = str(exc_info.value)
-    assert "Cannot specify both init_image and explicit width/height parameters" in error_msg
-    assert "height=300" in error_msg
+    assert widget.height == 300
+    assert widget.width == 600  # 300 * (200/100) = 600
+    assert widget.base64 != ""
 
 
-def test_paint_init_image_with_explicit_width_and_height_raises_error():
-    """Test that providing both init_image and explicit width/height raises ValueError."""
+def test_paint_init_image_with_explicit_width_raises_error():
+    """Test that providing both init_image and explicit width raises ValueError (even with height)."""
     img = create_test_image(width=200, height=100)
     
     with pytest.raises(ValueError) as exc_info:
         Paint(init_image=img, width=500, height=300)
     
     error_msg = str(exc_info.value)
-    assert "Cannot specify both init_image and explicit width/height parameters" in error_msg
+    assert "Cannot specify both init_image and explicit width parameter" in error_msg
     assert "width=500" in error_msg
-    assert "height=300" in error_msg
 
 
 def test_paint_init_image_auto_sets_dimensions():
@@ -322,3 +321,45 @@ def test_paint_with_exact_size_image():
     # Verify reconstructed image has exact same dimensions
     reconstructed = widget.get_pil()
     assert reconstructed.size == (test_width, test_height)
+
+
+def test_paint_init_image_scaled_height_preserves_aspect_ratio():
+    """Test that scaling with height preserves aspect ratio correctly."""
+    # Create image with 3:2 aspect ratio
+    img = create_test_image(width=300, height=200)
+    
+    # Scale to height 100
+    widget = Paint(init_image=img, height=100)
+    
+    # Width should be 150 (100 * 3/2 = 150)
+    assert widget.height == 100
+    assert widget.width == 150
+    assert widget.base64 != ""
+
+
+def test_paint_init_image_large_image_scaled_down():
+    """Test that a large image can be scaled down to fit screen."""
+    # Create a very large image
+    img = create_test_image(width=4000, height=2000)  # 2:1 aspect ratio
+    
+    # Scale down to height 400
+    widget = Paint(init_image=img, height=400)
+    
+    # Width should be 800 (400 * 2 = 800)
+    assert widget.height == 400
+    assert widget.width == 800
+    assert widget.base64 != ""
+
+
+def test_paint_init_image_tall_image_handling():
+    """Test handling of very tall (portrait) images."""
+    # Create a tall image (portrait orientation)
+    img = create_test_image(width=100, height=400)  # 1:4 aspect ratio
+    
+    # Scale to height 200
+    widget = Paint(init_image=img, height=200)
+    
+    # Width should be 50 (200 * 1/4 = 50)
+    assert widget.height == 200
+    assert widget.width == 50
+    assert widget.base64 != ""
