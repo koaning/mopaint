@@ -1,10 +1,11 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = 
+# dependencies = [
 #     "anywidget==0.9.18",
 #     "marimo",
+#     "google-genai"
 #     "mohtml==0.1.4",
-#     "pillow==11.1.0",
+#     "pillow",
 # ]
 # ///
 
@@ -15,6 +16,21 @@ app = marimo.App(width="columns")
 
 
 @app.cell(column=0)
+def _(mo):
+    replicate_key = mo.ui.text(label="Replicate Key")
+    google_key = mo.ui.text(label="Google Key")
+
+    mo.vstack([mo.md("## Api Keys"), mo.hstack([replicate_key, google_key])])
+    return google_key, replicate_key
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Draw """)
+    return
+
+
+@app.cell
 def _(Image):
     init_img = Image.open("dog.png")
     return
@@ -81,16 +97,18 @@ def _(image):
 
 
 @app.cell(hide_code=True)
-def _(Image, mo, prompt_input, run_btn, widget):
+def _(Image, google_key, mo, prompt_input, replicate_key, run_btn, widget):
     from google import genai
     from google.genai import types
     from io import BytesIO
     from dotenv import load_dotenv
+    import os
+
+    os.environ["REPLICATE_API_TOKEN"] = replicate_key.value
 
     mo.stop(not run_btn.value)
 
-    load_dotenv(".env")
-    client = genai.Client()
+    client = genai.Client(api_key=google_key.value)
 
     response = client.models.generate_content(
         model="gemini-2.5-flash-image-preview",
