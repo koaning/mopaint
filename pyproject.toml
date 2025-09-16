@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mopaint"
-version = "0.2.1"
+version = "0.3.0"
 description = "Paint for marimo"
 authors = [{name = "Vincent D. Warmerdam"}]
 readme = "README.md"
@@ -12,6 +12,7 @@ license = {file = "LICENSE"}
 requires-python = ">=3.8"
 dependencies = [
     "anywidget>=0.9.2",
+    "protobuf>=5.29.5",
 ]
 classifiers = [
     "Intended Audience :: Developers",

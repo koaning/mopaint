@@ -26,4 +26,4 @@ jobs:
         uv venv
         uv pip install -e .
         uv pip install pytest pillow marimo
-        uv run pytest
+        uv run pytest tests
