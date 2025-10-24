@@ -852,10 +852,6 @@ select {
   display: inline-flex;
 }
 
-.grid {
-  display: grid;
-}
-
 .h-0\.5 {
   height: 0.125rem;
 }
@@ -914,10 +910,6 @@ select {
 
 .cursor-move {
   cursor: move;
-}
-
-.cursor-not-allowed {
-  cursor: not-allowed;
 }
 
 .resize {
@@ -1073,10 +1065,6 @@ select {
 
 .underline {
   text-decoration-line: underline;
-}
-
-.opacity-50 {
-  opacity: 0.5;
 }
 
 .shadow-inner {

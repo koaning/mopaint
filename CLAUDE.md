@@ -67,7 +67,7 @@ make pypi
 
 ### Frontend Development
 When modifying the React component (`js/draw/widget.tsx`):
-1. The component uses a dual-canvas system - one for drawing and one for grid overlay
+1. The component uses a canvas-based drawing system with tools for brush, marker, and eraser
 2. Changes require rebuilding with `make js` or `npm run build-draw`
 3. Use `make dev` for hot reloading during development
 4. The built assets go to `mopaint/static/` and must be committed
@@ -76,17 +76,10 @@ When modifying the React component (`js/draw/widget.tsx`):
 The widget uses these key traitlets for state synchronization:
 - `image`: Base64-encoded drawing data
 - `height`/`width`: Canvas dimensions
-- `grid`: Whether to show grid overlay
-- `store_grid`: Whether to include grid in exported image
-- `store_bg`: Whether to include white background in export
-
-### Grid Validation Rules
-- `store_grid=True` requires `grid=True` (enforced in Python)
-- Grid spacing is fixed at 20px in the frontend
-- Grid lines are rendered on a separate canvas for performance
+- `store_background`: Whether to include white background in export
 
 ### Testing Considerations
-- Tests focus on grid parameter validation and state management
+- Tests focus on image initialization and state management
 - New drawing features should include tests for state synchronization
 - Canvas operations should handle browser limitations (max 4096x4096)
 

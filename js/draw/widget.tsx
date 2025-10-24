@@ -31,11 +31,9 @@ const colors = [
 
 // Constants for canvas settings
 const MAX_CANVAS_DIMENSION = 4096; // Most browsers support up to 4096x4096
-const GRID_SIZE = 20;
 
 function Component() {
   const drawingCanvasRef = useRef<HTMLCanvasElement>(null);
-  const gridCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [color, setColor] = useState('#000000');
@@ -45,23 +43,20 @@ function Component() {
   const [error, setError] = useState<string | null>(null);
   let [base64, setBase64] = useModelState<string>("base64");
   let [height, setHeight] = useModelState<number>("height");
-  let [showGrid, setShowGrid] = useModelState<boolean>("show_grid");
-  let [storeGrid, setStoreGrid] = useModelState<boolean>("store_grid");
   let [storeBackground, setStoreBackground] = useModelState<boolean>("store_background");
   
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
 
   // Utility function to ensure canvas context is available
-  const getContexts = () => {
+  const getContext = () => {
     const drawingContext = drawingCanvasRef.current?.getContext('2d');
-    const gridContext = gridCanvasRef.current?.getContext('2d');
-    return { drawingContext, gridContext };
+    return drawingContext;
   };
 
   // Utility function to ensure canvas sizes are in sync
   const syncCanvasSizes = (width: number, height: number) => {
-    const { drawingContext, gridContext } = getContexts();
-    if (!drawingContext || !gridContext) return false;
+    const drawingContext = getContext();
+    if (!drawingContext) return false;
 
     // Scale down if dimensions are too large
     const scale = Math.min(1, MAX_CANVAS_DIMENSION / Math.max(width, height));
@@ -71,15 +66,10 @@ function Component() {
     try {
       // Store the current drawing
       const drawingData = drawingCanvasRef.current?.toDataURL();
-      
+
       // Set canvas dimensions
       drawingCanvasRef.current!.width = finalWidth;
       drawingCanvasRef.current!.height = finalHeight;
-      gridCanvasRef.current!.width = finalWidth;
-      gridCanvasRef.current!.height = finalHeight;
-
-      // Clear grid canvas
-      gridContext.clearRect(0, 0, finalWidth, finalHeight);
 
       // Restore the drawing if we had one
       if (drawingData) {
@@ -96,28 +86,6 @@ function Component() {
       setError('Failed to resize canvas. Try reducing the window size.');
       return false;
     }
-  };
-
-  // Utility function to draw the grid programmatically on any context
-  const drawGridOnContext = (context: CanvasRenderingContext2D, width: number, height: number, showGrid: boolean) => {
-    if (!showGrid) return;
-    context.save();
-    context.strokeStyle = 'rgba(200, 200, 200, 0.5)';
-    context.lineWidth = 1;
-    context.setLineDash([]);
-    for (let x = GRID_SIZE; x < width; x += GRID_SIZE) {
-      context.beginPath();
-      context.moveTo(x, 0);
-      context.lineTo(x, height);
-      context.stroke();
-    }
-    for (let y = GRID_SIZE; y < height; y += GRID_SIZE) {
-      context.beginPath();
-      context.moveTo(0, y);
-      context.lineTo(width, y);
-      context.stroke();
-    }
-    context.restore();
   };
 
   // Handle window resize with debouncing
@@ -208,23 +176,6 @@ function Component() {
     };
   }, []);
 
-  // Effect to handle grid display
-  useEffect(() => {
-    const { gridContext } = getContexts();
-    if (!gridContext || !gridCanvasRef.current) return;
-    
-    const canvas = gridCanvasRef.current;
-    // Only proceed if canvas has proper dimensions
-    if (canvas.width === 0 || canvas.height === 0) return;
-    
-    // Clear the grid canvas first
-    gridContext.clearRect(0, 0, canvas.width, canvas.height);
-    // Draw grid if needed
-    if (showGrid) {
-      drawGridOnContext(gridContext, canvas.width, canvas.height, true);
-    }
-  }, [showGrid, canvasSize]);
-
   // Track the last loaded base64 to detect changes
   const lastLoadedBase64Ref = useRef<string>("");
   // Track if we're in the process of loading an initial image
@@ -236,7 +187,7 @@ function Component() {
 
   // Drawing functions - defined before effects that use them
   const startDrawingAt = (x: number, y: number) => {
-    const { drawingContext } = getContexts();
+    const drawingContext = getContext();
     if (!drawingContext) return;
 
     try {
@@ -251,8 +202,8 @@ function Component() {
 
   const drawAt = (x: number, y: number) => {
     if (!isDrawing) return;
-    
-    const { drawingContext } = getContexts();
+
+    const drawingContext = getContext();
     if (!drawingContext) return;
 
     try {
@@ -299,8 +250,8 @@ function Component() {
 
   // Effect to load initial image when base64 is available and canvas is ready
   useEffect(() => {
-    const { drawingContext } = getContexts();
-    
+    const drawingContext = getContext();
+
     // Skip if no context, canvas, or base64
     if (!drawingContext || !drawingCanvasRef.current || !base64) {
       return;
@@ -386,12 +337,7 @@ function Component() {
     // Layer 2: Drawing content (always preserve original alpha)
     exportContext.globalCompositeOperation = 'source-over';
     exportContext.drawImage(drawingCanvasRef.current, 0, 0);
-    
-    // Layer 3: Grid (if enabled)
-    if (storeGrid && showGrid) {
-      drawGridOnContext(exportContext, exportCanvas.width, exportCanvas.height, true);
-    }
-    
+
     // Update base64 output
     try {
       const dataUrl = exportCanvas.toDataURL('image/png');
@@ -400,7 +346,7 @@ function Component() {
       console.error('Failed to export canvas:', e);
       setError('Failed to export canvas. Try refreshing the page.');
     }
-  }, [storeGrid, storeBackground, showGrid, canvasSize, exportTrigger]);
+  }, [storeBackground, canvasSize, exportTrigger]);
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -434,16 +380,6 @@ function Component() {
   const stopDragging = () => {
     setDragging(false);
   };
-
-  const GridIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-      <line x1="3" y1="9" x2="21" y2="9"></line>
-      <line x1="3" y1="15" x2="21" y2="15"></line>
-      <line x1="9" y1="3" x2="9" y2="21"></line>
-      <line x1="15" y1="3" x2="15" y2="21"></line>
-    </svg>
-  );
 
   const BackgroundIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -542,34 +478,6 @@ function Component() {
             <div className="w-7 h-0.5 bg-gray-400 my-1"></div>
             <Button
               variant="ghost"
-              className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${showGrid ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
-              onClick={() => {
-                const newShowGrid = !showGrid;
-                setShowGrid(newShowGrid);
-                // If turning off grid, also turn off store_grid
-                if (!newShowGrid && storeGrid) {
-                  setStoreGrid(false);
-                }
-              }}
-              title="Show Grid"
-            >
-              <GridIcon />
-            </Button>
-            <Button
-              variant="ghost"
-              className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${storeGrid ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''} ${!showGrid ? 'opacity-50 cursor-not-allowed' : ''}`}
-              onClick={() => {
-                if (showGrid) {
-                  setStoreGrid(!storeGrid);
-                }
-              }}
-              disabled={!showGrid}
-              title={showGrid ? "Keep Grid in Output" : "Enable 'Show Grid' first"}
-            >
-              <GridIcon />
-            </Button>
-            <Button
-              variant="ghost"
               className={`w-7 h-7 p-0 min-w-0 mb-0.5 ${storeBackground ? 'bg-gray-300 border border-gray-400 shadow-inner' : ''}`}
               onClick={() => setStoreBackground(!storeBackground)}
               title="Store White Background"
@@ -617,34 +525,14 @@ function Component() {
 
           {/* Canvas area */}
           <div className="flex-grow overflow-hidden border border-gray-400 relative">
-            {/* Grid canvas - underneath */}
-            <canvas
-              ref={gridCanvasRef}
-              width={canvasSize.width}
-              height={canvasSize.height}
-              style={{ 
-                width: '100%', 
-                height: '100%',
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                zIndex: 1,
-                pointerEvents: 'none',
-                background: 'transparent'
-              }}
-            />
-            {/* Drawing canvas - on top */}
+            {/* Drawing canvas */}
             <canvas
               ref={drawingCanvasRef}
               width={canvasSize.width}
               height={canvasSize.height}
-              style={{ 
-                width: '100%', 
+              style={{
+                width: '100%',
                 height: '100%',
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                zIndex: 2,
                 background: 'transparent'
               }}
               onMouseDown={startDrawing}

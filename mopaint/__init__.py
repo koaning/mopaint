@@ -132,13 +132,8 @@ class Paint(anywidget.AnyWidget):
     width : int, optional
         Width of the drawing canvas in pixels. Default is 889 (16:9 aspect ratio).
     store_background : bool, optional
-        Whether to include a white background when exporting the image. 
+        Whether to include a white background when exporting the image.
         If False, the background will be transparent. Default is True.
-    show_grid : bool, optional
-        Whether to show a grid overlay on the canvas. Default is False.
-    store_grid : bool, optional
-        Whether to include the grid in the exported image. Requires show_grid=True.
-        Default is False.
     init_image : str, Path, PIL.Image.Image, bytes, or None, optional
         Initial image to load into the canvas. Can be:
         - PIL Image object
@@ -156,10 +151,7 @@ class Paint(anywidget.AnyWidget):
     >>> # Create widget with empty canvas
     >>> widget = Paint(height=400, width=600)
     >>> widget  # Display the widget
-    >>> 
-    >>> # Create widget with grid
-    >>> widget = Paint(height=400, width=600, show_grid=True)
-    >>> 
+    >>>
     >>> # Create widget with initial image from file
     >>> widget = Paint(init_image="path/to/image.png")
     >>> 
@@ -189,10 +181,8 @@ class Paint(anywidget.AnyWidget):
     height = traitlets.Int(500).tag(sync=True)
     width = traitlets.Int(889).tag(sync=True)  # Default to 16:9 aspect ratio with height 500
     store_background = traitlets.Bool(True).tag(sync=True)
-    show_grid = traitlets.Bool(False).tag(sync=True)
-    store_grid = traitlets.Bool(False).tag(sync=True)
     
-    def __init__(self, height=500, width=889, store_background=True, show_grid=False, store_grid=False, init_image=None):
+    def __init__(self, height=500, width=889, store_background=True, init_image=None):
         """Initialize the Paint widget.
         
         Parameters
@@ -204,13 +194,8 @@ class Paint(anywidget.AnyWidget):
             Width of the drawing canvas in pixels. Default is 889 (16:9 aspect ratio).
             Cannot be used together with init_image (width is calculated from height and aspect ratio).
         store_background : bool, optional
-            Whether to include a white background when exporting the image. 
+            Whether to include a white background when exporting the image.
             If False, the background will be transparent. Default is True.
-        show_grid : bool, optional
-            Whether to show a grid overlay on the canvas. Default is False.
-        store_grid : bool, optional
-            Whether to include the grid in the exported image. Requires show_grid=True.
-            Default is False.
         init_image : str, Path, PIL.Image.Image, bytes, or None, optional
             Initial image to load into the canvas. When provided, canvas dimensions
             are automatically calculated based on the image aspect ratio. If height
@@ -234,7 +219,7 @@ class Paint(anywidget.AnyWidget):
         
         # Get the signature to check which parameters were explicitly passed
         sig = inspect.signature(self.__init__)
-        bound_args = sig.bind_partial(height, width, store_background, show_grid, store_grid, init_image)
+        bound_args = sig.bind_partial(height, width, store_background, init_image)
         
         # Check if user provided explicit width when init_image is present
         user_provided_width = width != 889  # Default width
@@ -246,12 +231,7 @@ class Paint(anywidget.AnyWidget):
                 "Canvas width is automatically calculated from image aspect ratio and height. "
                 f"Received: width={width}, init_image={type(init_image).__name__}"
             )
-        
-        # Validate grid parameters
-        if store_grid and not show_grid:
-            raise ValueError("store_grid cannot be True when show_grid is False. "
-                           "To include the grid in the output, you must first make it visible with show_grid=True.")
-        
+
         super().__init__()
         
         # Handle initial image and set dimensions
@@ -281,23 +261,9 @@ class Paint(anywidget.AnyWidget):
             self.width = width
             self.height = height
             self.base64 = ""
-        
+
         self.store_background = store_background
-        self.show_grid = show_grid
-        self.store_grid = store_grid
-    
-    @traitlets.observe('store_grid', 'show_grid')
-    def _validate_grid_params(self, change):
-        """Validate grid parameters when they change."""
-        if self.store_grid and not self.show_grid:
-            # Reset store_grid to False if show_grid becomes False
-            if change['name'] == 'show_grid' and not change['new']:
-                self.store_grid = False
-            # Prevent setting store_grid to True when show_grid is False
-            elif change['name'] == 'store_grid' and change['new']:
-                raise ValueError("store_grid cannot be True when show_grid is False. "
-                               "To include the grid in the output, you must first make it visible with show_grid=True.")
-    
+
     def get_pil(self):
         """Get the current drawing as a PIL Image.
         

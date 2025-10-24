@@ -1,30 +1,22 @@
-# /// script
-# requires-python = ">=3.12"
-# dependencies = 
-#     "anywidget==0.9.18",
-#     "marimo",
-#     "mohtml==0.1.4",
-#     "pillow==11.1.0",
-# ]
-# ///
-
 import marimo
 
 __generated_with = "0.15.3"
-app = marimo.App(width="columns")
+app = marimo.App(width="medium", sql_output="polars")
 
 
-@app.cell(column=0)
-def _(Image):
-    init_img = Image.open("dog.png")
-    return
+@app.cell
+def _():
+    import marimo as mo
+    from mopaint import Paint
+    from mohtml import img, div, tailwind_css
+
+    tailwind_css()
+    return Paint, div, img, mo
 
 
 @app.cell
 def _(Paint, mo):
-    widget = mo.ui.anywidget(
-        Paint(init_image="https://i.insider.com/5df14d0ee94e860668396b82?width=700", height=900)
-    )
+    widget = mo.ui.anywidget(Paint(height=550))
     return (widget,)
 
 
@@ -35,134 +27,46 @@ def _(widget):
 
 
 @app.cell
-def _():
-    import marimo as mo
-    from mopaint import Paint
-    from mohtml import img, div, tailwind_css
-
-    tailwind_css()
-    return Paint, mo
+def _(div, img, widget):
+    div(
+        img(src=widget.get_base64()), klass="bg-gray-200 p-4"
+    )
+    return
 
 
 @app.cell
 def _(widget):
-    widget.value
-    return
-
-
-@app.cell
-def _():
-    from PIL import Image, ImageDraw
-    return (Image,)
-
-
-@app.cell(column=1, hide_code=True)
-def _(mo):
-    run_btn = mo.ui.run_button(label="generate image")
-    run_btn
-    return (run_btn,)
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    prompt_input = mo.ui.text_area(
-        value="Make this image loop hyper realistic, but keep the background transparant, like a png.",
-        label="prompt",
-        full_width=True,
-    )
-    prompt_input
-    return (prompt_input,)
-
-
-@app.cell
-def _(image):
-    image
+    widget.get_pil()
     return
 
 
 @app.cell(hide_code=True)
-def _(Image, mo, prompt_input, run_btn, widget):
-    from google import genai
-    from google.genai import types
-    from io import BytesIO
-    from dotenv import load_dotenv
-
-    mo.stop(not run_btn.value)
-
-    load_dotenv(".env")
-    client = genai.Client()
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-image-preview",
-        contents=[prompt_input.value, widget.get_pil()],
-    )
-
-    for part in response.candidates[0].content.parts:
-        if part.text is not None:
-            print(part.text)
-        elif part.inline_data is not None:
-            image = Image.open(BytesIO(part.inline_data.data))
-            image.save("generated_image.png")
-    return (image,)
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell(column=2)
 def _(mo):
-    bg_btn = mo.ui.run_button(label="remove background")
-    bg_btn
-    return (bg_btn,)
-
-
-@app.cell
-def _(mo, output):
-    mo.image(src=output.url)
+    mo.md(r"""You can also draw over existing images with this library, this can be useful when interacting with multimodal LLMs.""")
     return
 
 
 @app.cell
-def _():
-    import replicate
-    return (replicate,)
-
-
-@app.cell
-def _():
-    import io
-    import base64
-
-
-    def pil_to_data_uri(image, format="JPEG"):
-        img_bytes = io.BytesIO()
-        image.save(img_bytes, format=format)
-        b64 = base64.b64encode(img_bytes.getvalue()).decode()
-        return f"data:image/{format.lower()};base64,{b64}"
-    return (pil_to_data_uri,)
-
-
-@app.cell
-def _(bg_btn, image, mo, pil_to_data_uri, replicate):
-    mo.stop(not bg_btn.value)
-
-    output = replicate.run(
-        "851-labs/background-remover:a029dff38972b5fda4ec5d75d7d1cd25aeff621d2cf4946a41055d7db66b80bc",
-        input={"image": pil_to_data_uri(image)},
+def _(Paint, mo):
+    redraw_widget = mo.ui.anywidget(
+        Paint(init_image="https://marimo.io/_next/image?url=%2Fimages%2Fblog%2F8%2Fthumbnail.png&w=1920&q=75")
     )
-
-    print(output.url)
-    return (output,)
+    return (redraw_widget,)
 
 
 @app.cell
-def _():
+def _(redraw_widget):
+    redraw_widget
     return
 
 
-@app.cell(column=4)
+@app.cell
+def _(redraw_widget):
+    redraw_widget.get_pil()
+    return
+
+
+@app.cell
 def _():
     return
 

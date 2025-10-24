@@ -178,3 +178,4 @@ cython_debug/
 node_modules/
 .specstory/
 esbuild
+__marimo__

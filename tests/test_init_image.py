@@ -215,19 +215,6 @@ def test_paint_with_invalid_init_image():
         Paint(init_image="/path/that/does/not/exist.png")
 
 
-def test_paint_init_image_with_grid_parameters():
-    """Test Paint widget initialization with init_image and grid parameters."""
-    img = create_test_image()
-    widget = Paint(init_image=img, show_grid=True, store_grid=True)
-    
-    assert widget.base64 != ""
-    assert widget.show_grid is True
-    assert widget.store_grid is True
-    
-    reconstructed = widget.get_pil()
-    assert reconstructed.size == img.size
-
-
 def test_paint_init_image_with_explicit_width_only_raises_error():
     """Test that providing both init_image and explicit width raises ValueError."""
     img = create_test_image(width=200, height=100)
