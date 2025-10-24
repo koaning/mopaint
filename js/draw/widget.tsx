@@ -180,10 +180,15 @@ function Component() {
   const lastLoadedBase64Ref = useRef<string>("");
   // Track if we're in the process of loading an initial image
   const isLoadingInitialImageRef = useRef(false);
-  // Store the original base64 image for reset operations
+  // Store the original base64 image for reset operations (captured on first render only)
   const originalImageRef = useRef<string>("");
   // Track drawing changes to trigger exports
   const [exportTrigger, setExportTrigger] = useState(0);
+
+  // Capture the original base64 ONCE on component mount (before any user drawings)
+  useEffect(() => {
+    originalImageRef.current = base64;
+  }, []); // Empty deps = runs only once on mount
 
   // Drawing functions - defined before effects that use them
   const startDrawingAt = (x: number, y: number) => {
@@ -281,12 +286,7 @@ function Component() {
     }
     
     isLoadingInitialImageRef.current = true;
-    
-    // Store original image if this is the first time loading it
-    if (!originalImageRef.current && base64) {
-      originalImageRef.current = base64;
-    }
-    
+
     // Load the initial image
     const img = new Image();
     img.onload = () => {
@@ -493,15 +493,27 @@ function Component() {
                 if (drawingCanvas) {
                   const drawingContext = drawingCanvas.getContext('2d');
                   if (drawingContext) {
+                    // Clear the entire canvas first
                     drawingContext.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-                    
+
                     // If we have an original image, restore it
                     if (originalImageRef.current) {
+                      // Set loading flag to prevent premature exports
+                      isLoadingInitialImageRef.current = true;
+
                       const img = new Image();
                       img.onload = () => {
                         // Draw image at original size (no scaling)
                         drawingContext.drawImage(img, 0, 0, img.width, img.height);
+                        // Clear loading flag
+                        isLoadingInitialImageRef.current = false;
                         // Trigger export after restoring
+                        setExportTrigger(prev => prev + 1);
+                      };
+                      img.onerror = () => {
+                        // Clear loading flag even on error
+                        isLoadingInitialImageRef.current = false;
+                        // Trigger export of empty canvas
                         setExportTrigger(prev => prev + 1);
                       };
                       img.src = `data:image/png;base64,${originalImageRef.current}`;

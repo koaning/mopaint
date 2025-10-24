@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mopaint"
-version = "0.3.0"
+version = "0.4.0"
 description = "Paint for marimo"
 authors = [{name = "Vincent D. Warmerdam"}]
 readme = "README.md"
@@ -23,6 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Topic :: Scientific/Engineering",
 ]
